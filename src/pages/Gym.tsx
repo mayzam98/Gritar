@@ -6,10 +6,71 @@ import type { Position } from '../core/domain/Exercise';
 import { Link } from 'react-router-dom';
 import { CORE_CHORDS } from '../core/domain/ChordDictionary';
 import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
-import { Volume2 } from 'lucide-react';
+import { dspEngine } from '../core/infrastructure/audio/PolyphonicDSP';
+import { Volume2, Mic, Activity } from 'lucide-react';
 
 const Gym: React.FC = () => {
   const chords = CORE_CHORDS;
+  const [isListening, setIsListening] = React.useState(false);
+  const [detectedNotes, setDetectedNotes] = React.useState<{note: string, freq: number, amplitude: number}[]>([]);
+  const animationRef = React.useRef<number>();
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const toggleDSP = async () => {
+    if (isListening) {
+      dspEngine.stopMicrophone();
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      setIsListening(false);
+      setDetectedNotes([]);
+    } else {
+      try {
+        await dspEngine.startMicrophone();
+        setIsListening(true);
+        const analyzeLoop = () => {
+          const notes = dspEngine.analyzeCurrentSpectrum();
+          setDetectedNotes(notes);
+
+          // Draw spectrum
+          const analyser = dspEngine.getAnalyser();
+          if (analyser && canvasRef.current) {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              const bufferLength = analyser.frequencyBinCount;
+              const dataArray = new Uint8Array(bufferLength);
+              analyser.getByteFrequencyData(dataArray);
+
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.fillStyle = '#10b981';
+              
+              const barWidth = (canvas.width / 200); // Only draw lower frequencies
+              let x = 0;
+
+              for (let i = 0; i < 200; i++) {
+                const barHeight = (dataArray[i] / 255) * canvas.height;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+              }
+            }
+          }
+
+          animationRef.current = requestAnimationFrame(analyzeLoop);
+        };
+        analyzeLoop();
+      } catch (err) {
+        alert("No se pudo acceder al micrófono.");
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (isListening) {
+        dspEngine.stopMicrophone();
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isListening]);
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
@@ -43,7 +104,95 @@ const Gym: React.FC = () => {
           </Link>
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600, marginTop: '24px' }}>Librería de Acordes</h3>
+        {/* DSP Engine Panel */}
+        <div className="card" style={{ marginTop: '24px', border: isListening ? '1px solid #10b981' : '1px solid #334155' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: isListening ? '#10b981' : 'var(--text-primary)' }}>
+              <Activity size={20} />
+              Motor DSP Analítico
+            </h4>
+            <button 
+              onClick={toggleDSP}
+              style={{
+                backgroundColor: isListening ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                color: isListening ? '#10b981' : '#60a5fa',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Mic size={16} />
+              {isListening ? 'Detener Análisis' : 'Activar Micrófono'}
+            </button>
+          </div>
+          
+          <div style={{ 
+            backgroundColor: '#0f172a', 
+            padding: '16px', 
+            borderRadius: '8px', 
+            fontFamily: 'monospace', 
+            minHeight: '100px',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {!isListening ? (
+              <div style={{ color: '#64748b', textAlign: 'center', marginTop: '24px' }}>
+                El DSP está apagado. Actívalo y toca tu guitarra.
+              </div>
+            ) : (
+              <>
+                <div style={{ color: '#10b981', fontSize: '0.8rem', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>STATUS: ESCUCHANDO_POLIFONIA</span>
+                  <span>PEAKS: {detectedNotes.length}</span>
+                </div>
+                
+                <canvas 
+                  ref={canvasRef} 
+                  width={300} 
+                  height={60} 
+                  style={{ width: '100%', height: '60px', marginBottom: '12px', opacity: 0.8, borderRadius: '4px', backgroundColor: 'rgba(0,0,0,0.3)' }} 
+                />
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {detectedNotes.length === 0 && (
+                    <span style={{ color: '#475569' }}>Silencio detectado...</span>
+                  )}
+                  {detectedNotes.map((n, i) => (
+                    <div key={i} style={{ 
+                      backgroundColor: `rgba(16, 185, 129, ${Math.max(0.2, (n.amplitude + 100) / 100)})`,
+                      border: '1px solid #10b981',
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{ fontWeight: 800, fontSize: '1.2rem' }}>{n.note.replace(/[0-9]/g, '')}</span>
+                      <span style={{ fontSize: '0.6rem', color: '#a7f3d0' }}>{n.freq.toFixed(1)}Hz</span>
+                    </div>
+                  ))}
+                </div>
+                {detectedNotes.length > 2 && (
+                  <div style={{ marginTop: '16px', textAlign: 'center', color: '#60a5fa', fontSize: '0.9rem', fontWeight: 600 }}>
+                    {/* Basic chord guessing logic */}
+                    {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Do Mayor (C)"}
+                    {['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Sol Mayor (G)"}
+                    {['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: La Menor (Am)"}
+                    {['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Re Mayor (D)"}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600, marginTop: '32px' }}>Librería de Acordes</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
           {chords.map((chord, idx) => {
