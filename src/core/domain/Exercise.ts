@@ -8,15 +8,35 @@ export interface Position {
 export type HandCategory = 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH';
 
 export class Exercise {
+  public readonly id: string;
+  public readonly name: string;
+  public readonly description: string;
+  public readonly category: HandCategory;
+  public readonly durationInSeconds: number;
+  public readonly defaultBPM: number;
+  public readonly imageUrl: string;
+  public readonly instructions: string[];
+  public readonly fretboardData?: Position[];
+
   constructor(
-    public readonly id: string,
-    public readonly name: string,
-    public readonly description: string,
-    public readonly category: HandCategory,
-    public readonly durationInSeconds: number,
-    public readonly defaultBPM: number,
-    public readonly imageUrl: string,
-    public readonly instructions: string[],
-    public readonly fretboardData?: Position[] // Positional data for dynamic rendering
-  ) {}
+    id: string,
+    name: string,
+    description: string,
+    category: HandCategory,
+    durationInSeconds: number,
+    defaultBPM: number,
+    imageUrl: string,
+    instructions: string[],
+    fretboardData?: Position[]
+  ) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.category = category;
+    this.durationInSeconds = durationInSeconds;
+    this.defaultBPM = defaultBPM;
+    this.imageUrl = imageUrl;
+    this.instructions = instructions;
+    this.fretboardData = fretboardData;
+  }
 }

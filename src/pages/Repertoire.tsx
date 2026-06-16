@@ -5,8 +5,10 @@ import { AiProviderType } from '../core/domain/AiProvider';
 import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
 import InteractiveFretboard from '../components/ui/InteractiveFretboard';
+import { useAppStore } from '../core/application/store';
 
 const Repertoire: React.FC = () => {
+  const { savedSongs, saveSong, deleteSong } = useAppStore();
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -332,7 +334,22 @@ const Repertoire: React.FC = () => {
                   </ul>
                 </div>
                 
-                <button className="btn" style={{ width: '100%', marginTop: '16px' }}>
+                <button 
+                  className="btn" 
+                  style={{ width: '100%', marginTop: '16px' }}
+                  onClick={() => {
+                    saveSong({
+                      url: analysisResult.originalVideo,
+                      title: `Tutorial Guardado - ${new Date().toLocaleDateString()}`,
+                      chords: analysisResult.chords,
+                      chordTimestamps: analysisResult.chordTimestamps,
+                      chordDetails: analysisResult.chordDetails,
+                      strumming: analysisResult.strumming,
+                      summary: analysisResult.summary
+                    });
+                    alert("¡Tutorial guardado en tu repertorio!");
+                  }}
+                >
                   <FileText size={18} />
                   Guardar en mi Repertorio
                 </button>
@@ -341,39 +358,53 @@ const Repertoire: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Canciones Guardadas</h3>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Canciones Guardadas ({(savedSongs || []).length})</h3>
 
         <div style={{ display: 'grid', gap: '16px' }}>
-          {songs.map((song, idx) => (
-            <div key={idx} className="card" style={{ margin: 0, padding: '16px' }}>
+          {(savedSongs || []).map((song) => (
+            <div key={song.id} className="card" style={{ margin: 0, padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: 700 }}>{song.title}</h3>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{song.artist}</p>
+                  <a href={song.url} target="_blank" rel="noreferrer" style={{ margin: 0, fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none' }}>Ver en YouTube</a>
                 </div>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <Heart color="var(--text-secondary)" size={20} />
+                <button 
+                  onClick={() => deleteSong(song.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem' }}
+                >
+                  Eliminar
                 </button>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                {song.chords.map(c => (
-                  <span key={c} style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
+                {song.chords.map((c, idx) => (
+                  <span key={`${c}-${idx}`} style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
                     {c}
                   </span>
                 ))}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', color: song.difficulty === 'Fácil' ? '#22c55e' : '#ef4444' }}>
-                  {song.difficulty}
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {new Date(song.createdAt).toLocaleDateString()}
                 </span>
-                <button className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
-                  <PlayCircle size={16} /> Practicar
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                  onClick={() => {
+                    setUrl(song.url);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <PlayCircle size={16} /> Analizar de nuevo
                 </button>
               </div>
             </div>
           ))}
+          
+          {(savedSongs || []).length === 0 && (
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>No tienes canciones guardadas aún. Analiza un tutorial y guárdalo.</p>
+          )}
         </div>
       </div>
     </div>

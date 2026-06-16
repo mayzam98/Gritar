@@ -50,15 +50,29 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
       const x = marginLeft + i * fretWidth;
       const isNut = startFret === 1 && i === 0;
       return (
-        <line 
-          key={`fret-${i}`} 
-          x1={x} 
-          y1={marginTop} 
-          x2={x} 
-          y2={height - marginBottom} 
-          stroke={isNut ? "#cbd5e1" : "#334155"} 
-          strokeWidth={isNut ? 3 : 1} 
-        />
+        <g key={`fret-${i}`}>
+          <line 
+            x1={x} 
+            y1={marginTop} 
+            x2={x} 
+            y2={height - marginBottom} 
+            stroke={isNut ? "#cbd5e1" : "#334155"} 
+            strokeWidth={isNut ? 3 : 1} 
+          />
+          {/* Fret numbers printed below the fret space (not on the fret line itself) */}
+          {i < fretCount && (
+            <text 
+              x={x + fretWidth / 2} 
+              y={height - 2} 
+              fill="#64748b" 
+              fontSize="4" 
+              fontFamily="sans-serif"
+              textAnchor="middle"
+            >
+              {startFret + i}
+            </text>
+          )}
+        </g>
       );
     });
   };
@@ -133,12 +147,6 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
         {renderMarkers()}
         {renderPositions()}
       </svg>
-      {/* If not starting at fret 1, show the starting fret number */}
-      {startFret > 1 && (
-        <div style={{ position: 'absolute', bottom: '2px', left: '10px', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 'bold' }}>
-          {startFret}fr
-        </div>
-      )}
     </div>
   );
 };

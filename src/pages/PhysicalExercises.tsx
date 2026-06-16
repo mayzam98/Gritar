@@ -35,8 +35,8 @@ const PhysicalExercises: React.FC = () => {
     return () => clearInterval(interval);
   }, [isTimerRunning, timeLeft]);
 
-  const startWarmup = () => {
-    const newRoutine = useCase.execute(5); // 5 minutes = 5 exercises
+  const startWarmup = (category?: 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH') => {
+    const newRoutine = useCase.execute(5, category); // 5 minutes = 5 exercises
     setRoutine(newRoutine);
     setCurrentExerciseIndex(0);
     setShowInstructions(false);
@@ -110,7 +110,7 @@ const PhysicalExercises: React.FC = () => {
           <span className="badge">1/5 min</span>
         </div>
         
-        <button className="btn" onClick={startWarmup}>
+        <button className="btn" onClick={() => startWarmup()}>
           <Play fill="currentColor" size={20} />
           Iniciar Rutina
         </button>
@@ -120,20 +120,32 @@ const PhysicalExercises: React.FC = () => {
       <div style={{ padding: '0 20px', marginBottom: '20px' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Enfoque Técnico</h3>
         <div className="grid-2">
-          <motion.div className="card" style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <motion.div 
+            className="card" 
+            style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => startWarmup('LEFT_HAND')}
+            whileHover={{ scale: 1.05 }}
+          >
             <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '50%', marginBottom: '12px' }}>
               <Activity color="#3b82f6" size={28} />
             </div>
             <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Mano Izquierda</h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Independencia y fuerza</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '8px' }}>Independencia y fuerza</p>
+            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Play size={14} /> Entrenar</button>
           </motion.div>
 
-          <motion.div className="card" style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <motion.div 
+            className="card" 
+            style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+            onClick={() => startWarmup('RIGHT_HAND')}
+            whileHover={{ scale: 1.05 }}
+          >
             <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '12px', borderRadius: '50%', marginBottom: '12px' }}>
               <Target color="#22c55e" size={28} />
             </div>
             <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Mano Derecha</h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Precisión de púa</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '8px' }}>Precisión de púa</p>
+            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Play size={14} /> Entrenar</button>
           </motion.div>
         </div>
       </div>

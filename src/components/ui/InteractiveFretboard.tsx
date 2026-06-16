@@ -43,9 +43,16 @@ const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
       return (
         <g key={`fret-${i}`}>
           <line x1={x} y1={marginTop} x2={x} y2={height - marginBottom} stroke={isNut ? "#cbd5e1" : "#334155"} strokeWidth={isNut ? 3 : 1} />
-          {i === 0 && startFret > 1 && (
-            <text x={x - 4} y={height - marginBottom + 8} fill="#94a3b8" fontSize="6" fontFamily="monospace">
-              {startFret}fr
+          {i < fretCount && (
+            <text 
+              x={x + fretWidth / 2} 
+              y={height - 2} 
+              fill="#64748b" 
+              fontSize="4" 
+              fontFamily="sans-serif"
+              textAnchor="middle"
+            >
+              {startFret + i}
             </text>
           )}
         </g>

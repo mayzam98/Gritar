@@ -4,10 +4,12 @@ import { Plus, Save, Trash2, CheckCircle, Search, Lightbulb } from 'lucide-react
 import InteractiveFretboard from '../components/ui/InteractiveFretboard';
 import type { Position } from '../core/domain/Exercise';
 import { analyzeChord } from '../core/domain/ChordAnalyzer';
+import { useAppStore } from '../core/application/store';
 
 const Creations: React.FC = () => {
   const [positions, setPositions] = useState<Position[]>([]);
-  const [savedCreations, setSavedCreations] = useState<{ id: string, name: string, positions: Position[] }[]>([]);
+  const [creationStartFret, setCreationStartFret] = useState(1);
+  const { discoveries, addDiscovery, deleteDiscovery } = useAppStore();
 
   const togglePosition = (string: number, fret: number) => {
     setPositions(prev => {
@@ -24,12 +26,12 @@ const Creations: React.FC = () => {
 
   const saveCreation = () => {
     if (positions.length === 0) return;
-    const newCreation = {
-      id: Date.now().toString(),
-      name: analysis?.closestChord ? `Variación de ${analysis.closestChord}` : 'Acorde Desconocido',
+    addDiscovery({
+      type: 'chord',
+      title: analysis?.closestChord ? `Variación de ${analysis.closestChord}` : 'Acorde Desconocido',
+      notes: analysis?.message || '',
       positions: [...positions]
-    };
-    setSavedCreations([newCreation, ...savedCreations]);
+    });
     setPositions([]);
   };
 
@@ -46,14 +48,35 @@ const Creations: React.FC = () => {
             <Plus color="#3b82f6" />
             Nuevo Acorde
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
-            Toca el diapasón para colocar los dedos.
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+              Toca el diapasón para colocar los dedos.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                onClick={() => setCreationStartFret(prev => Math.max(1, prev - 1))}
+                disabled={creationStartFret <= 1}
+              >
+                ◀ Arriba
+              </button>
+              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Traste {creationStartFret}</span>
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                onClick={() => setCreationStartFret(prev => prev + 1)}
+                disabled={creationStartFret >= 15}
+              >
+                Abajo ▶
+              </button>
+            </div>
+          </div>
 
           <InteractiveFretboard 
             positions={positions} 
             onPositionToggle={togglePosition} 
-            startFret={1} 
+            startFret={creationStartFret} 
             fretCount={5} 
           />
 
@@ -96,27 +119,35 @@ const Creations: React.FC = () => {
           </div>
         </div>
 
-        {savedCreations.length > 0 && (
+        {(discoveries || []).length > 0 && (
           <div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Descubrimientos</h3>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Descubrimientos ({(discoveries || []).length})</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {savedCreations.map(creation => (
-                <div key={creation.id} className="card" style={{ margin: 0, padding: '16px' }}>
+              {(discoveries || []).map(discovery => (
+                <div key={discovery.id} className="card" style={{ margin: 0, padding: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Lightbulb size={16} color="#eab308" />
-                      {creation.name}
+                      {discovery.title}
                     </h4>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      {creation.positions.length} dedos
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {discovery.positions?.length || 0} dedos
+                      </span>
+                      <button 
+                        onClick={() => deleteDiscovery(discovery.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem', padding: 0 }}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                   <div style={{ pointerEvents: 'none' }}>
                     <InteractiveFretboard 
-                      positions={creation.positions} 
+                      positions={discovery.positions || []} 
                       onPositionToggle={() => {}} 
-                      startFret={1} 
-                      fretCount={4} 
+                      startFret={discovery.positions?.length ? Math.max(1, Math.min(...discovery.positions.map(p => p.fret)) - 1) : 1} 
+                      fretCount={5} 
                     />
                   </div>
                 </div>

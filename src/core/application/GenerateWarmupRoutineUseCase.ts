@@ -51,8 +51,12 @@ export class GenerateWarmupRoutineUseCase {
     ]),
   ];
 
-  execute(totalDurationMinutes: number): Exercise[] {
-    const shuffled = [...this.availableExercises].sort(() => 0.5 - Math.random());
+  execute(totalDurationMinutes: number, category?: 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH'): Exercise[] {
+    let pool = [...this.availableExercises];
+    if (category) {
+      pool = pool.filter(e => e.category === category || e.category === 'BOTH');
+    }
+    const shuffled = pool.sort(() => 0.5 - Math.random());
     return shuffled.slice(0, totalDurationMinutes);
   }
 }
