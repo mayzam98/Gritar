@@ -20,7 +20,12 @@ export class PolyphonicDSP {
     { note: 'A#3', freq: 233.08 }, { note: 'B3', freq: 246.94 }, { note: 'C4', freq: 261.63 },
     { note: 'C#4', freq: 277.18 }, { note: 'D4', freq: 293.66 }, { note: 'D#4', freq: 311.13 },
     { note: 'E4', freq: 329.63 }, { note: 'F4', freq: 349.23 }, { note: 'F#4', freq: 369.99 },
-    { note: 'G4', freq: 392.00 }
+    { note: 'G4', freq: 392.00 }, { note: 'G#4', freq: 415.30 }, { note: 'A4', freq: 440.00 },
+    { note: 'A#4', freq: 466.16 }, { note: 'B4', freq: 493.88 }, { note: 'C5', freq: 523.25 },
+    { note: 'C#5', freq: 554.37 }, { note: 'D5', freq: 587.33 }, { note: 'D#5', freq: 622.25 },
+    { note: 'E5', freq: 659.25 }, { note: 'F5', freq: 698.46 }, { note: 'F#5', freq: 739.99 },
+    { note: 'G5', freq: 783.99 }, { note: 'G#5', freq: 830.61 }, { note: 'A5', freq: 880.00 },
+    { note: 'A#5', freq: 932.33 }, { note: 'B5', freq: 987.77 }, { note: 'C6', freq: 1046.50 }
   ];
 
   public async startMicrophone(): Promise<void> {
@@ -78,11 +83,16 @@ export class PolyphonicDSP {
     const sampleRate = this.audioCtx.sampleRate;
     const peaks: { bin: number, amplitude: number }[] = [];
 
+    // Calcular el umbral de ruido dinámico (Noise Floor)
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+    const avgNoise = sum / bufferLength;
+    const dynamicThreshold = Math.max(-80, avgNoise + 15); // Al menos 15 dB sobre el ruido ambiente
+
     // 1. Detección de picos (Peak Picking)
     for (let i = 1; i < bufferLength - 1; i++) {
       const amplitude = dataArray[i];
-      // Bajar el threshold para detectar acordes suaves pero requerir picos más marcados
-      if (amplitude > -80) { 
+      if (amplitude > dynamicThreshold) { 
         if (amplitude > dataArray[i - 1] && amplitude > dataArray[i + 1]) {
           peaks.push({ bin: i, amplitude });
         }

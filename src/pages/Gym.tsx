@@ -41,14 +41,23 @@ const Gym: React.FC = () => {
               analyser.getByteFrequencyData(dataArray);
 
               ctx.clearRect(0, 0, canvas.width, canvas.height);
-              ctx.fillStyle = '#10b981';
               
-              const barWidth = (canvas.width / 200); // Only draw lower frequencies
+              // Draw mirrored spectrum (center out)
+              const barWidth = (canvas.width / 200);
               let x = 0;
+              const centerY = canvas.height / 2;
 
               for (let i = 0; i < 200; i++) {
-                const barHeight = (dataArray[i] / 255) * canvas.height;
-                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                const barHeight = (dataArray[i] / 255) * (canvas.height / 2);
+                
+                // Neon glow effect for higher amplitudes
+                ctx.fillStyle = dataArray[i] > 180 ? '#34d399' : '#059669';
+                
+                // Draw top half
+                ctx.fillRect(x, centerY - barHeight, barWidth, barHeight);
+                // Draw bottom half
+                ctx.fillRect(x, centerY, barWidth, barHeight);
+                
                 x += barWidth + 1;
               }
             }
@@ -179,12 +188,21 @@ const Gym: React.FC = () => {
                   ))}
                 </div>
                 {detectedNotes.length > 2 && (
-                  <div style={{ marginTop: '16px', textAlign: 'center', color: '#60a5fa', fontSize: '0.9rem', fontWeight: 600 }}>
+                  <div style={{ 
+                    marginTop: '16px', 
+                    textAlign: 'center', 
+                    color: '#60a5fa', 
+                    fontSize: '1.1rem', 
+                    fontWeight: 800,
+                    textShadow: '0 0 10px rgba(96, 165, 250, 0.5)',
+                    padding: '8px',
+                    borderTop: '1px solid rgba(96, 165, 250, 0.2)'
+                  }}>
                     {/* Basic chord guessing logic */}
-                    {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Do Mayor (C)"}
-                    {['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Sol Mayor (G)"}
-                    {['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: La Menor (Am)"}
-                    {['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) && "Acorde Detectado: Re Mayor (D)"}
+                    {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Do Mayor (C)"}
+                    {['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Sol Mayor (G)"}
+                    {['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: La Menor (Am)"}
+                    {['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Re Mayor (D)"}
                   </div>
                 )}
               </>
