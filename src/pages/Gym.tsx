@@ -5,6 +5,8 @@ import FretboardVisualizer from '../components/ui/FretboardVisualizer';
 import type { Position } from '../core/domain/Exercise';
 import { Link } from 'react-router-dom';
 import { CORE_CHORDS } from '../core/domain/ChordDictionary';
+import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
+import { Volume2 } from 'lucide-react';
 
 const Gym: React.FC = () => {
   const chords = CORE_CHORDS;
@@ -48,7 +50,13 @@ const Gym: React.FC = () => {
             const minFret = Math.min(...chord.positions.map(p => p.fret));
             const startFret = minFret > 3 ? minFret - 1 : 1;
             return (
-              <div key={idx} className="card" style={{ margin: 0, padding: '16px', opacity: chord.unlocked ? 1 : 0.5 }}>
+              <motion.div 
+                key={idx} 
+                className="card" 
+                whileHover={{ scale: 1.02, rotateY: 2, rotateX: 2 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                style={{ margin: 0, padding: '16px', opacity: chord.unlocked ? 1 : 0.5, perspective: '1000px' }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h4 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {chord.unlocked ? <Star size={18} color="#eab308" /> : <Lock size={18} color="var(--text-secondary)" />}
@@ -60,9 +68,26 @@ const Gym: React.FC = () => {
                 </div>
                 
                 <div style={{ pointerEvents: 'none', filter: chord.unlocked ? 'none' : 'grayscale(100%)' }}>
-                  <FretboardVisualizer positions={chord.positions as Position[]} startFret={startFret} fretCount={5} />
+                  <FretboardVisualizer 
+                    positions={chord.positions as Position[]} 
+                    startFret={startFret} 
+                    fretCount={5} 
+                    mutedStrings={chord.mutedStrings}
+                    openStrings={chord.openStrings}
+                  />
                 </div>
-              </div>
+
+                {chord.unlocked && (
+                  <button 
+                    onClick={() => audioEngine.playChord(chord.positions as Position[])}
+                    className="btn btn-secondary" 
+                    style={{ marginTop: '16px', width: '100%', padding: '8px', fontSize: '0.9rem', gap: '8px' }}
+                  >
+                    <Volume2 size={16} color="#60a5fa" />
+                    Escuchar Acorde
+                  </button>
+                )}
+              </motion.div>
             );
           })}
         </div>

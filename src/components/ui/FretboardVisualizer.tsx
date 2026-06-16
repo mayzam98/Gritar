@@ -5,12 +5,16 @@ interface FretboardVisualizerProps {
   positions: Position[];
   startFret?: number;
   fretCount?: number;
+  mutedStrings?: number[];
+  openStrings?: number[];
 }
 
 const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({ 
   positions, 
   startFret = 1, 
-  fretCount = 5 
+  fretCount = 5,
+  mutedStrings = [],
+  openStrings = []
 }) => {
   const height = 60;
   const marginTop = 10;
@@ -129,6 +133,41 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
     });
   };
 
+  const renderStringIndicators = () => {
+    return Array.from({ length: 6 }).map((_, i) => {
+      const strNumber = i + 1;
+      const y = getStringY(strNumber);
+      
+      let indicator = '';
+      let color = '#64748b';
+      
+      if (mutedStrings.includes(strNumber)) {
+        indicator = 'X';
+        color = '#ef4444'; // Red for muted
+      } else if (openStrings.includes(strNumber)) {
+        indicator = 'O';
+        color = '#22c55e'; // Green for open
+      } else {
+        return null;
+      }
+
+      return (
+        <text 
+          key={`ind-${strNumber}`}
+          x={marginLeft - 4} 
+          y={y} 
+          fill={color} 
+          fontSize="4" 
+          fontWeight="bold"
+          textAnchor="middle"
+          dominantBaseline="central"
+        >
+          {indicator}
+        </text>
+      );
+    });
+  };
+
   return (
     <div style={{ 
       width: '100%', 
@@ -142,6 +181,7 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
         preserveAspectRatio="xMidYMid meet"
         style={{ width: '100%', height: 'auto', display: 'block' }}
       >
+        {renderStringIndicators()}
         {renderFrets()}
         {renderStrings()}
         {renderMarkers()}

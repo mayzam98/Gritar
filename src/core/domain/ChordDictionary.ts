@@ -6,16 +6,18 @@ export interface ChordDefinition {
   level: 'Básico' | 'Intermedio' | 'Avanzado';
   positions: Position[];
   unlocked?: boolean;
+  mutedStrings?: number[];
+  openStrings?: number[];
 }
 
 export const CORE_CHORDS: ChordDefinition[] = [
   // Acordes Mayores (Básicos)
-  { id: 'c', name: 'Do Mayor (C)', level: 'Básico', unlocked: true, positions: [{ string: 5, fret: 3, finger: 3 }, { string: 4, fret: 2, finger: 2 }, { string: 2, fret: 1, finger: 1 }] },
-  { id: 'd', name: 'Re Mayor (D)', level: 'Básico', unlocked: true, positions: [{ string: 3, fret: 2, finger: 1 }, { string: 1, fret: 2, finger: 2 }, { string: 2, fret: 3, finger: 3 }] },
-  { id: 'e', name: 'Mi Mayor (E)', level: 'Básico', unlocked: true, positions: [{ string: 5, fret: 2, finger: 2 }, { string: 4, fret: 2, finger: 3 }, { string: 3, fret: 1, finger: 1 }] },
-  { id: 'f', name: 'Fa Mayor (F)', level: 'Intermedio', unlocked: true, positions: [{ string: 6, fret: 1, finger: 1 }, { string: 5, fret: 3, finger: 3 }, { string: 4, fret: 3, finger: 4 }, { string: 3, fret: 2, finger: 2 }, { string: 2, fret: 1, finger: 1 }, { string: 1, fret: 1, finger: 1 }] },
-  { id: 'g', name: 'Sol Mayor (G)', level: 'Básico', unlocked: true, positions: [{ string: 6, fret: 3, finger: 3 }, { string: 5, fret: 2, finger: 2 }, { string: 1, fret: 3, finger: 4 }] },
-  { id: 'a', name: 'La Mayor (A)', level: 'Básico', unlocked: true, positions: [{ string: 4, fret: 2, finger: 1 }, { string: 3, fret: 2, finger: 2 }, { string: 2, fret: 2, finger: 3 }] },
+  { id: 'c', name: 'Do Mayor (C)', level: 'Básico', unlocked: true, mutedStrings: [6], openStrings: [3, 1], positions: [{ string: 5, fret: 3, finger: 3 }, { string: 4, fret: 2, finger: 2 }, { string: 2, fret: 1, finger: 1 }] },
+  { id: 'd', name: 'Re Mayor (D)', level: 'Básico', unlocked: true, mutedStrings: [6, 5], openStrings: [4], positions: [{ string: 3, fret: 2, finger: 1 }, { string: 1, fret: 2, finger: 2 }, { string: 2, fret: 3, finger: 3 }] },
+  { id: 'e', name: 'Mi Mayor (E)', level: 'Básico', unlocked: true, mutedStrings: [], openStrings: [6, 2, 1], positions: [{ string: 5, fret: 2, finger: 2 }, { string: 4, fret: 2, finger: 3 }, { string: 3, fret: 1, finger: 1 }] },
+  { id: 'f', name: 'Fa Mayor (F)', level: 'Intermedio', unlocked: true, mutedStrings: [], openStrings: [], positions: [{ string: 6, fret: 1, finger: 1 }, { string: 5, fret: 3, finger: 3 }, { string: 4, fret: 3, finger: 4 }, { string: 3, fret: 2, finger: 2 }, { string: 2, fret: 1, finger: 1 }, { string: 1, fret: 1, finger: 1 }] },
+  { id: 'g', name: 'Sol Mayor (G)', level: 'Básico', unlocked: true, mutedStrings: [], openStrings: [4, 3, 2], positions: [{ string: 6, fret: 3, finger: 3 }, { string: 5, fret: 2, finger: 2 }, { string: 1, fret: 3, finger: 4 }] },
+  { id: 'a', name: 'La Mayor (A)', level: 'Básico', unlocked: true, mutedStrings: [6], openStrings: [5, 1], positions: [{ string: 4, fret: 2, finger: 1 }, { string: 3, fret: 2, finger: 2 }, { string: 2, fret: 2, finger: 3 }] },
   
   // Acordes Menores (Básicos)
   { id: 'dm', name: 'Re Menor (Dm)', level: 'Básico', unlocked: true, positions: [{ string: 3, fret: 2, finger: 2 }, { string: 1, fret: 1, finger: 1 }, { string: 2, fret: 3, finger: 3 }] },
