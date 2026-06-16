@@ -30,7 +30,8 @@ const Creations: React.FC = () => {
       type: 'chord',
       title: analysis?.closestChord ? `Variación de ${analysis.closestChord}` : 'Acorde Desconocido',
       notes: analysis?.message || '',
-      positions: [...positions]
+      positions: [...positions],
+      tags: analysis?.tags || []
     });
     setPositions([]);
   };
@@ -150,6 +151,15 @@ const Creations: React.FC = () => {
                       fretCount={5} 
                     />
                   </div>
+                  {discovery.tags && discovery.tags.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                      {discovery.tags.map(tag => (
+                        <span key={tag} className="badge" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', fontSize: '0.75rem' }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -80,7 +80,7 @@ const KNOWN_CHORDS: KnownChord[] = [
   }
 ];
 
-export function analyzeChord(userPositions: Position[]): { closestChord: string, matchPercentage: number, message: string } | null {
+export function analyzeChord(userPositions: Position[]): { closestChord: string, matchPercentage: number, message: string, tags: string[] } | null {
   if (userPositions.length === 0) return null;
 
   let bestMatch: KnownChord | null = null;
@@ -151,9 +151,30 @@ export function analyzeChord(userPositions: Position[]): { closestChord: string,
     message = `Esta es una forma muy única. Su estructura base se aleja de los acordes tradicionales, pero recuerda más o menos a un ${bestMatch.name}.`;
   }
 
+  let tags: string[] = [];
+  
+  if (userPositions.length >= 4) {
+    tags.push("Acorde Complejo");
+  }
+  
+  const span = Math.max(...userPositions.map(p => p.fret)) - Math.min(...userPositions.map(p => p.fret));
+  if (span >= 3) {
+    tags.push("Estiramiento");
+  }
+
+  if (matchPercentage === 100) {
+    tags.push("Perfecto");
+  } else if (matchPercentage <= 50) {
+    tags.push("Disonante");
+    tags.push("Experimental");
+  } else {
+    tags.push("Variación");
+  }
+
   return {
     closestChord: bestMatch.name,
     matchPercentage,
-    message
+    message,
+    tags
   };
 }

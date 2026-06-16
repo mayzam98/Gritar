@@ -1,62 +1,154 @@
 import { Exercise } from '../domain/Exercise';
+import type { HandCategory } from '../domain/Exercise';
 
 export class GenerateWarmupRoutineUseCase {
-  private availableExercises: Exercise[] = [
-    new Exercise('1', 'Araña 1-2-3-4', 'Ejercicio cromático básico en todas las cuerdas.', 'BOTH', 60, 80, '', [
-      'Posiciona tu dedo índice (1) en el primer traste de la 6ta cuerda.',
-      'Toca con púa hacia abajo. Luego, coloca el dedo medio (2) en el segundo traste y toca con púa hacia arriba.',
-      'Continúa con los dedos anular (3) y meñique (4).',
-      'Desciende a la 5ta cuerda y repite el patrón. Mantén los dedos cerca del diapasón.'
-    ], [
-      { string: 6, fret: 1, finger: 1, color: '#3b82f6' },
-      { string: 6, fret: 2, finger: 2, color: '#22c55e' },
-      { string: 6, fret: 3, finger: 3, color: '#eab308' },
-      { string: 6, fret: 4, finger: 4, color: '#ef4444' }
-    ]),
-    new Exercise('2', 'Trinos Dedo 1 y 2', 'Alternar notas rápidamente entre el dedo índice y medio.', 'LEFT_HAND', 60, 100, '', [
-      'Coloca tu dedo índice en el traste 5 de la 3ra cuerda.',
-      'Toca la nota y, sin levantar el índice, haz un "Hammer-on" rápido con tu dedo medio en el traste 6.',
-      'Inmediatamente realiza un "Pull-off" de vuelta al traste 5.',
-      'Repite el movimiento continuamente sin detenerte.'
-    ], [
-      { string: 3, fret: 5, finger: 1, color: '#3b82f6' },
-      { string: 3, fret: 6, finger: 2, color: '#22c55e' }
-    ]),
-    new Exercise('3', 'Púa Alternada', 'Practicar abajo-arriba en cuerdas al aire.', 'RIGHT_HAND', 60, 120, '', [
-      'Sostén la púa con firmeza pero sin tensar la muñeca.',
-      'Comienza en la 6ta cuerda tocando con un movimiento hacia abajo.',
-      'El siguiente ataque debe ser estrictamente hacia arriba.',
-      'Toca 4 veces por cuerda usando metrónomo y luego cambia a la 5ta cuerda.'
-    ], [
-      // For open strings, we can represent them on fret 0 if we adjust the visualizer, or just show a marker.
-      { string: 6, fret: 1, color: 'transparent' } // Placeholder for right hand exercise
-    ]),
-    new Exercise('4', 'Estiramiento 1-3-5', 'Ejercicios de amplitud en la mano izquierda.', 'LEFT_HAND', 60, 60, '', [
-      'Coloca el dedo índice en el traste 1 de la 6ta cuerda.',
-      'Estira el dedo anular para presionar el traste 3 de la misma cuerda.',
-      'Estira el meñique para alcanzar el traste 5 de la misma cuerda.',
-      'Si es muy doloroso, mueve el patrón a trastes más altos (ej: 5-7-9).'
-    ], [
-      { string: 6, fret: 1, finger: 1, color: '#3b82f6' },
-      { string: 6, fret: 3, finger: 3, color: '#eab308' },
-      { string: 6, fret: 5, finger: 4, color: '#ef4444' }
-    ]),
-    new Exercise('5', 'Salto de Cuerdas', 'Púa alternada saltando una cuerda intermedia.', 'RIGHT_HAND', 60, 90, '', [
-      'Toca la 6ta cuerda al aire con la púa hacia abajo.',
-      'Salta la 5ta cuerda y toca la 4ta cuerda al aire con la púa hacia arriba.',
-      'Regresa a la 5ta cuerda con púa hacia abajo.',
-      'Salta a la 3ra cuerda con púa hacia arriba. Mantén el movimiento de muñeca mínimo.'
-    ], [
-      { string: 6, fret: 1, color: 'transparent' } // Placeholder
-    ]),
-  ];
+  execute(category?: HandCategory): Exercise[] {
+    const allExercises: Exercise[] = [
+      // LEFT HAND
+      new Exercise(
+        'e1',
+        'Araña Cromática (1-2-3-4)',
+        'Ejercicio fundamental para la independencia de los dedos de la mano izquierda.',
+        'LEFT_HAND',
+        60,
+        60,
+        '',
+        [
+          'Coloca el dedo índice en el traste 1 de la 6ta cuerda.',
+          'Usa un dedo diferente para cada traste consecutivo (1-2-3-4).',
+          'Sube a la 5ta cuerda y repite el patrón hasta llegar a la 1ra.',
+          'Mantén los dedos cerca del diapasón al levantarlos.'
+        ]
+      ),
+      new Exercise(
+        'e2',
+        'Estiramiento de Dedos (1-3-2-4)',
+        'Mejora la elasticidad y apertura de la mano izquierda.',
+        'LEFT_HAND',
+        60,
+        50,
+        '',
+        [
+          'Toca el traste 1 con el dedo índice.',
+          'Toca el traste 3 con el anular (siente el estiramiento).',
+          'Toca el traste 2 con el medio.',
+          'Toca el traste 4 con el meñique.',
+          'Repite subiendo por las cuerdas.'
+        ]
+      ),
+      new Exercise(
+        'e7',
+        'Legato Trinos (Hammer/Pull)',
+        'Desarrolla fuerza y resistencia explosiva en la mano izquierda.',
+        'LEFT_HAND',
+        45,
+        70,
+        '',
+        [
+          'Pisa el traste 5 con el índice en la 3ra cuerda y mantenlo anclado.',
+          'Haz un hammer-on rápido al traste 6 con el medio y un pull-off de vuelta al 5.',
+          'Hazlo lo más rápido y constante que puedas durante 15 segundos.',
+          'Cambia y hazlo con el dedo anular (traste 7) y luego meñique (traste 8).'
+        ]
+      ),
 
-  execute(totalDurationMinutes: number, category?: 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH'): Exercise[] {
-    let pool = [...this.availableExercises];
+      // RIGHT HAND
+      new Exercise(
+        'e3',
+        'Púa Alternada Estricta',
+        'Desarrolla velocidad y sincronización en la mano derecha.',
+        'RIGHT_HAND',
+        60,
+        80,
+        '',
+        [
+          'Toca al aire la 6ta cuerda con movimiento Abajo.',
+          'Toca la misma cuerda con movimiento Arriba.',
+          'Toca la 5ta cuerda Abajo, luego Arriba.',
+          'Asegúrate de que el movimiento nazca de la muñeca, no del codo.'
+        ]
+      ),
+      new Exercise(
+        'e8',
+        'Palm Mute Endurance',
+        'Construye resistencia (stamina) rítmica para tocar metal o rock pesado.',
+        'RIGHT_HAND',
+        90,
+        120,
+        '',
+        [
+          'Coloca el borde de tu mano derecha sobre el puente.',
+          'Toca corcheas constantes en la 6ta cuerda al aire (solo movimientos hacia abajo).',
+          'Mantén la tensión uniforme. Si te duele el antebrazo, relaja la presión.'
+        ]
+      ),
+      new Exercise(
+        'e9',
+        'String Skipping (Salto de Cuerdas)',
+        'Precisión absoluta con la púa al cruzar distancias largas.',
+        'RIGHT_HAND',
+        60,
+        60,
+        '',
+        [
+          'Toca la 6ta cuerda al aire.',
+          'Salta y toca la 4ta cuerda al aire.',
+          'Toca la 5ta cuerda al aire.',
+          'Salta y toca la 3ra cuerda al aire.',
+          'Acostumbra a tu mano a medir la distancia de una cuerda saltada.'
+        ]
+      ),
+
+      // BOTH HANDS
+      new Exercise(
+        'e4',
+        'Sincronización Escala Mayor',
+        'Alinea el cerebro con ambas manos tocando una escala musical.',
+        'BOTH',
+        120,
+        70,
+        '',
+        [
+          'Toca la escala de Do Mayor comenzando en la 5ta cuerda traste 3.',
+          'Usa estricta púa alternada.',
+          'Concéntrate en que el sonido de la púa ocurra exactamente en el mismo milisegundo que el dedo de la mano izquierda pisa el traste.'
+        ]
+      ),
+      new Exercise(
+        'e5',
+        'Arpegios Sweep Picking Básicos',
+        'Fluidez cruzando cuerdas en una sola dirección.',
+        'BOTH',
+        90,
+        60,
+        '',
+        [
+          'Toca un arpegio menor en las 3 primeras cuerdas.',
+          'El movimiento de la mano derecha es un solo empuje hacia abajo (como rasguear lento).',
+          'La mano izquierda debe presionar y soltar cada nota individualmente para que no suenen juntas como un acorde.'
+        ]
+      ),
+      new Exercise(
+        'e6',
+        'Coordinación de Acordes Rápidos',
+        'Memoria muscular para cambiar de acordes sin pausar el rasgueo.',
+        'BOTH',
+        90,
+        80,
+        '',
+        [
+          'Haz un rasgueo constante (Abajo, Arriba, Abajo, Arriba) de 4 tiempos.',
+          'Cambia entre Do Mayor y Sol Mayor cada 2 tiempos.',
+          'Regla de oro: El rasgueo de la mano derecha NUNCA se detiene, incluso si la mano izquierda no ha llegado a tiempo.'
+        ]
+      )
+    ];
+
     if (category) {
-      pool = pool.filter(e => e.category === category || e.category === 'BOTH');
+      return allExercises.filter(e => e.category === category || e.category === 'BOTH');
     }
-    const shuffled = pool.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, totalDurationMinutes);
+
+    // Default warmup mixes everything
+    return allExercises.sort(() => 0.5 - Math.random()).slice(0, 4);
   }
 }

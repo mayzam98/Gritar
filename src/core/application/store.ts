@@ -20,6 +20,7 @@ export interface Discovery {
   title: string;
   notes: string;
   positions?: any[]; // added positions
+  tags?: string[];
   createdAt: number;
 }
 

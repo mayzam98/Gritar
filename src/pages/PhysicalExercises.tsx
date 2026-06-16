@@ -36,7 +36,7 @@ const PhysicalExercises: React.FC = () => {
   }, [isTimerRunning, timeLeft]);
 
   const startWarmup = (category?: 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH') => {
-    const newRoutine = useCase.execute(5, category); // 5 minutes = 5 exercises
+    const newRoutine = useCase.execute(category);
     setRoutine(newRoutine);
     setCurrentExerciseIndex(0);
     setShowInstructions(false);
