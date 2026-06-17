@@ -2,7 +2,7 @@ export class YouTubeTranscriptService {
   /**
    * Fetches the transcript of a YouTube video using our custom Vite backend plugin.
    */
-  static async getTranscript(youtubeUrl: string): Promise<string> {
+  static async getTranscript(youtubeUrl: string): Promise<{text: string, title: string}> {
     try {
       const response = await fetch(`/api/transcript?url=${encodeURIComponent(youtubeUrl)}`);
       
@@ -17,7 +17,7 @@ export class YouTubeTranscriptService {
         throw new Error("El archivo de subtítulos está vacío o el video no tiene subtítulos disponibles.");
       }
       
-      return data.text;
+      return { text: data.text, title: data.title || 'Tutorial Guardado' };
 
     } catch (error: any) {
       console.error("Transcript extraction error:", error);

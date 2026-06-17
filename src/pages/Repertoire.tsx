@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot, Plus } from 'lucide-react';
+import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot, Plus, ArrowRightLeft } from 'lucide-react';
 import { AiProviderType } from '../core/domain/AiProvider';
 import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
@@ -9,7 +10,30 @@ import YouTubeSyncPlayer from '../components/ui/YouTubeSyncPlayer';
 import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import { useAppStore } from '../core/application/store';
 
+const MemoryCard: React.FC<{ song: any, index: number, deleteSong: any, updateSong: any, navigate: any, onLoadMemory: any }> = ({ song, index, deleteSong, updateSong, navigate, onLoadMemory }) => {
+  return (
+    <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden', marginBottom: '8px' }}>
+      <div 
+        style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        onClick={() => onLoadMemory(song)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#60a5fa' }}>Memoria {index}</span>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({new Date(song.createdAt).toLocaleDateString()})</span>
+        </div>
+        <button 
+          onClick={(e) => { e.stopPropagation(); deleteSong(song.id); }}
+          style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer' }}
+        >
+          Eliminar
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Repertoire: React.FC = () => {
+  const navigate = useNavigate();
   const { savedSongs, saveSong, updateSong, deleteSong } = useAppStore();
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -57,7 +81,7 @@ const Repertoire: React.FC = () => {
       const videoId = (match && match[7].length === 11) ? match[7] : '';
       
       setAnalysisResult({
-        title: "Tutorial Descifrado",
+        title: (result as any).title || "Tutorial Descifrado",
         originalVideo: url,
         videoId: videoId,
         ...result,
@@ -77,9 +101,21 @@ const Repertoire: React.FC = () => {
       setAnalysisResult({ 
         ...analysisResult, 
         currentSeekTime: timeSeconds,
-        playbackTrigger: Math.random() 
+        seekTrigger: Math.random() 
       });
     }
+  };
+
+  const onLoadMemory = (song: any) => {
+    setUrl(song.url);
+    setAnalysisResult({
+      ...song,
+      originalVideo: song.url,
+      // ensure videoId exists in case it was missed
+      videoId: song.url.match(/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/)?.[7] || '',
+      currentSeekTime: 0
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -210,6 +246,10 @@ const Repertoire: React.FC = () => {
                   Análisis Completado
                 </h3>
                 
+                <h2 style={{ margin: '0 0 16px 0', fontSize: '1.3rem', fontWeight: 'bold' }}>
+                  {analysisResult.title}
+                </h2>
+                
                 {/* Embedded Video Player */}
                 {analysisResult.videoId && (
                   <div style={{ marginBottom: '24px' }}>
@@ -320,7 +360,7 @@ const Repertoire: React.FC = () => {
                     {analysisResult.strummingPatterns && analysisResult.strummingPatterns.length > 0 ? (
                       analysisResult.strummingPatterns.map((sp: any, idx: number) => (
                         <div key={idx} style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
                             {sp.timeSeconds !== undefined && sp.timeSeconds !== null && (
                               <button 
@@ -336,6 +376,31 @@ const Repertoire: React.FC = () => {
                                 <PlayCircle size={14} />
                               </button>
                             )}
+                            <div style={{ flex: 1 }} />
+                            <button
+                              onClick={() => {
+                                // Extract the unique chords from analysisResult.chords in order of appearance
+                                const uniqueChords = Array.from(new Set(analysisResult.chords || []));
+                                const chordA = uniqueChords[0] || 'C';
+                                const chordB = uniqueChords[1] || 'G';
+                                
+                                navigate('/transiciones', {
+                                  state: {
+                                    chordA,
+                                    chordB,
+                                    chordDetails: analysisResult.chordDetails || [],
+                                    rhythm: {
+                                      name: sp.name,
+                                      pattern: sp.pattern
+                                    }
+                                  }
+                                });
+                              }}
+                              className="btn btn-primary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)' }}
+                            >
+                              <ArrowRightLeft size={12} /> Practicar Transiciones
+                            </button>
                           </div>
                           <StrummingVisualizer 
                             steps={sp.pattern} 
@@ -394,7 +459,7 @@ const Repertoire: React.FC = () => {
                   onClick={() => {
                     saveSong({
                       url: analysisResult.originalVideo,
-                      title: `Tutorial Guardado - ${new Date().toLocaleDateString()}`,
+                      title: analysisResult.title || `Tutorial Guardado - ${new Date().toLocaleDateString()}`,
                       chords: analysisResult.chords,
                       chordTimestamps: analysisResult.chordTimestamps,
                       chordDetails: analysisResult.chordDetails,
@@ -413,67 +478,51 @@ const Repertoire: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Canciones Guardadas ({(savedSongs || []).length})</h3>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Tus Canciones Guardadas ({Object.keys((savedSongs || []).reduce((acc: any, song) => { acc[song.url] = true; return acc; }, {})).length})</h3>
 
         <div style={{ display: 'grid', gap: '16px' }}>
-          {(savedSongs || []).map((song) => (
-            <div key={song.id} className="card" style={{ margin: 0, padding: '16px' }}>
+          {Object.values((savedSongs || []).reduce((acc: any, song) => {
+            if (!acc[song.url]) {
+              acc[song.url] = { url: song.url, title: song.title, memories: [] };
+            }
+            if (song.title && !song.title.startsWith('Tutorial Guardado - ')) {
+              acc[song.url].title = song.title;
+            }
+            acc[song.url].memories.push(song);
+            return acc;
+          }, {})).map((group: any) => (
+            <div key={group.url} className="card" style={{ margin: 0, padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: 700 }}>{song.title}</h3>
-                  <a href={song.url} target="_blank" rel="noreferrer" style={{ margin: 0, fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none' }}>Ver en YouTube</a>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: 700 }}>{group.title}</h3>
+                  <a href={group.url} target="_blank" rel="noreferrer" style={{ margin: 0, fontSize: '0.8rem', color: '#3b82f6', textDecoration: 'none' }}>Ver en YouTube</a>
                 </div>
-                <button 
-                  onClick={() => deleteSong(song.id)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem' }}
-                >
-                  Eliminar
-                </button>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                {song.chords.map((c, idx) => (
-                  <span key={`${c}-${idx}`} style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-                    {c}
-                  </span>
+              <div style={{ marginTop: '12px' }}>
+                {group.memories.map((song: any, idx: number) => (
+                  <MemoryCard 
+                    key={song.id} 
+                    song={song} 
+                    index={idx + 1} 
+                    deleteSong={deleteSong} 
+                    updateSong={updateSong} 
+                    navigate={navigate}
+                    onLoadMemory={onLoadMemory}
+                  />
                 ))}
               </div>
 
-              {song.strummingPatterns && song.strummingPatterns.length > 0 && (
-                <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {song.strummingPatterns.map((sp: any, idx: number) => (
-                    <div key={idx} style={{ padding: '8px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                      <span style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
-                      <StrummingVisualizer 
-                        steps={sp.pattern} 
-                        size="sm" 
-                        isEditable={true}
-                        onChange={(newSteps) => {
-                          const newPatterns = [...song.strummingPatterns!];
-                          newPatterns[idx] = { ...newPatterns[idx], pattern: newSteps };
-                          updateSong(song.id, { strummingPatterns: newPatterns });
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  {new Date(song.createdAt).toLocaleDateString()}
-                </span>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ padding: '8px 16px', fontSize: '0.9rem' }}
-                  onClick={() => {
-                    setUrl(song.url);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                >
-                  <PlayCircle size={16} /> Analizar de nuevo
-                </button>
-              </div>
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '8px 16px', fontSize: '0.9rem', width: '100%', marginTop: '8px' }}
+                onClick={() => {
+                  setUrl(group.url);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <PlayCircle size={16} /> Analizar de nuevo (Nueva Memoria)
+              </button>
             </div>
           ))}
           

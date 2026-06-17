@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Repeat, ArrowRight, Activity, GitMerge, CheckCircle2 } from 'lucide-react';
 import FretboardVisualizer from '../components/ui/FretboardVisualizer';
@@ -10,8 +11,8 @@ import { CORE_CHORDS } from '../core/domain/ChordDictionary';
 
 const Transitions: React.FC = () => {
   const { savedSongs } = useAppStore();
-  const [selectedChordA, setSelectedChordA] = useState<any>(CORE_CHORDS[0]);
-  const [selectedChordB, setSelectedChordB] = useState<any>(CORE_CHORDS[1]);
+  const location = useLocation();
+  const initialState = location.state as any;
 
   // Extract chords from saved songs to allow practicing them
   const repertoireChords: any[] = [];
@@ -25,7 +26,36 @@ const Transitions: React.FC = () => {
     });
   });
 
+  if (initialState && initialState.chordDetails) {
+    initialState.chordDetails.forEach((detail: any) => {
+      // Avoid duplicates if the exact chord is already imported
+      if (!repertoireChords.find(c => c.id === `imported-${detail.chord}`)) {
+        repertoireChords.push({
+          id: `imported-${detail.chord}`,
+          name: detail.chord,
+          positions: detail.positions
+        });
+      }
+    });
+  }
+
   const allAvailableChords = [...CORE_CHORDS, ...repertoireChords];
+
+  const [selectedChordA, setSelectedChordA] = useState<any>(() => {
+    if (initialState && initialState.chordA) {
+       return allAvailableChords.find(c => c.name === initialState.chordA) || CORE_CHORDS[0];
+    }
+    return CORE_CHORDS[0];
+  });
+  
+  const [selectedChordB, setSelectedChordB] = useState<any>(() => {
+    if (initialState && initialState.chordB) {
+       // Try not to pick the exact same chord as A if possible
+       const found = allAvailableChords.find(c => c.name === initialState.chordB);
+       return found || CORE_CHORDS[1];
+    }
+    return CORE_CHORDS[1];
+  });
 
   const analysis = analyzeTransition(selectedChordA.positions as Position[], selectedChordB.positions as Position[]);
 
@@ -46,10 +76,16 @@ const Transitions: React.FC = () => {
     { id: 'bolero', name: 'Bolero', steps: ['B', '↓', '↑', '-', '↓', '↑'] },
   ];
 
+  let initialRhythms = RHYTHMS;
+  if (initialState && initialState.rhythm) {
+      initialRhythms = [{ id: 'imported_rhythm', name: initialState.rhythm.name, steps: initialState.rhythm.pattern }, ...RHYTHMS];
+  }
+
   const [isPracticing, setIsPracticing] = useState(false);
   const [bpm, setBpm] = useState(60);
   const [activeChordToggle, setActiveChordToggle] = useState<'A' | 'B'>('A');
-  const [selectedRhythm, setSelectedRhythm] = useState(RHYTHMS[0]);
+  const [availableRhythms, setAvailableRhythms] = useState(initialRhythms);
+  const [selectedRhythm, setSelectedRhythm] = useState(initialRhythms[0]);
   const [currentBeat, setCurrentBeat] = useState(1);
   
   // AudioContext for Metronome
@@ -244,10 +280,10 @@ const Transitions: React.FC = () => {
                   <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Patrón de Ritmo</span>
                   <select 
                     value={selectedRhythm.id} 
-                    onChange={e => setSelectedRhythm(RHYTHMS.find(r => r.id === e.target.value) || RHYTHMS[0])}
+                    onChange={e => setSelectedRhythm(availableRhythms.find(r => r.id === e.target.value) || availableRhythms[0])}
                     style={{ backgroundColor: 'transparent', color: '#60a5fa', border: 'none', fontWeight: 'bold' }}
                   >
-                    {RHYTHMS.map(r => (
+                    {availableRhythms.map(r => (
                       <option key={r.id} value={r.id} style={{ color: 'black' }}>{r.name}</option>
                     ))}
                   </select>

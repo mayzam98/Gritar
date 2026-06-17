@@ -24,8 +24,21 @@ const youtubeTranscriptPlugin = () => {
             // Example: [12] Hola a todos
             const formattedText = transcriptArray.map(t => "[" + Math.floor(t.offset / 1000) + "] " + t.text).join("\n");
             
+            // Fetch video title by scraping the HTML
+            let title = 'Tutorial Guardado';
+            try {
+              const htmlResponse = await fetch(videoUrl);
+              const htmlText = await htmlResponse.text();
+              const titleMatch = htmlText.match(/<title>(.*?)<\/title>/);
+              if (titleMatch && titleMatch[1]) {
+                title = titleMatch[1].replace(' - YouTube', '').trim();
+              }
+            } catch (e) {
+              console.error("Could not fetch title", e);
+            }
+            
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ text: formattedText }));
+            res.end(JSON.stringify({ text: formattedText, title: title }));
           } catch (error) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: error.message }));

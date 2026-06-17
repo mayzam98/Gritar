@@ -10,12 +10,14 @@ export class AnalyzeYouTubeTutorialUseCase {
 
   async execute(youtubeUrl: string): Promise<AiAnalysisResult> {
     // 1. Get the real transcript from YouTube
-    let transcript: string;
+    let transcriptData: {text: string, title: string};
     try {
-      transcript = await YouTubeTranscriptService.getTranscript(youtubeUrl);
+      transcriptData = await YouTubeTranscriptService.getTranscript(youtubeUrl);
     } catch (error: any) {
       throw new Error(`Error al obtener subtítulos: ${error.message}`);
     }
+
+    let transcript = transcriptData.text;
 
     // Protect against huge transcripts breaking the LLM token limit
     // Slice to the first ~15,000 characters (approx 3000-4000 tokens)
@@ -26,7 +28,10 @@ export class AnalyzeYouTubeTutorialUseCase {
     // 2. Send the extracted transcript to the AI Provider configured by the user
     try {
       const result = await this.aiProvider.analyzeTutorial(transcript);
-      return result;
+      return {
+        ...result,
+        title: transcriptData.title // Inject the scraped title into the result
+      } as AiAnalysisResult & { title?: string };
     } catch (error) {
       console.error("Error analyzing tutorial:", error);
       throw new Error("No se pudo analizar el tutorial con el proveedor de IA configurado.");
