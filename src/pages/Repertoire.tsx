@@ -6,6 +6,7 @@ import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
 import InteractiveFretboard from '../components/ui/InteractiveFretboard';
 import YouTubeSyncPlayer from '../components/ui/YouTubeSyncPlayer';
+import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import { useAppStore } from '../core/application/store';
 
 const Repertoire: React.FC = () => {
@@ -318,9 +319,15 @@ const Repertoire: React.FC = () => {
 
                 <div style={{ marginBottom: '16px' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Patrón de Rasgueo:</strong>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                    {analysisResult.strumming}
-                  </p>
+                  <div style={{ marginTop: '8px' }}>
+                    {Array.isArray(analysisResult.strumming) ? (
+                      <StrummingVisualizer steps={analysisResult.strumming} size="sm" />
+                    ) : (
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                        {analysisResult.strumming}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>

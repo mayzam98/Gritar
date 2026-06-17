@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Repeat, ArrowRight, Activity, GitMerge, CheckCircle2 } from 'lucide-react';
 import FretboardVisualizer from '../components/ui/FretboardVisualizer';
+import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import { analyzeTransition } from '../core/domain/TransitionAnalyzer';
 import type { Position } from '../core/domain/Exercise';
 import { useAppStore } from '../core/application/store';
@@ -290,41 +291,8 @@ const Transitions: React.FC = () => {
                 </h3>
                 
                 {/* Rhythm / Strumming Pattern Visualizer */}
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', backgroundColor: 'rgba(0,0,0,0.3)', padding: '12px 24px', borderRadius: '16px' }}>
-                  {selectedRhythm.steps.map((step, i) => {
-                    const isActive = currentBeat === i + 1;
-                    const isSilent = step === '-';
-                    
-                    let stepColor = '#94a3b8';
-                    if (isActive) {
-                      if (step === 'B') stepColor = '#10b981'; // Emerald for Bass
-                      else if (step === 'X') stepColor = '#ef4444'; // Red for Mute/Slap
-                      else if (i === 0) stepColor = '#3b82f6'; // Blue for first beat
-                      else stepColor = '#eab308'; // Yellow for others
-                    }
-
-                    return (
-                      <div key={i} style={{ 
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                        opacity: isActive && !isSilent ? 1 : 0.3,
-                        transform: isActive && !isSilent ? 'scale(1.2)' : 'scale(1)',
-                        transition: 'all 0.1s'
-                      }}>
-                        <span style={{ 
-                          fontSize: step === 'B' || step === 'X' ? '1.5rem' : '2rem', 
-                          color: stepColor, 
-                          fontWeight: 'bold',
-                          height: '32px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {isSilent ? '•' : step}
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>Beat {i + 1}</span>
-                      </div>
-                    );
-                  })}
+                <div style={{ marginBottom: '32px' }}>
+                  <StrummingVisualizer steps={selectedRhythm.steps} currentBeat={currentBeat} size="lg" />
                 </div>
 
                 <div style={{ transform: 'scale(1.2)', transformOrigin: 'top center', pointerEvents: 'none' }}>
