@@ -7,12 +7,18 @@ import { Link } from 'react-router-dom';
 import { CORE_CHORDS } from '../core/domain/ChordDictionary';
 import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
 import { dspEngine } from '../core/infrastructure/audio/PolyphonicDSP';
-import { Volume2, Mic, Activity } from 'lucide-react';
+import { chordClassifier } from '../core/infrastructure/audio/ChordClassifier';
+import { Volume2, Mic, Activity, BrainCircuit } from 'lucide-react';
 
 const Gym: React.FC = () => {
   const chords = CORE_CHORDS;
   const [isListening, setIsListening] = React.useState(false);
+  const [isTraining, setIsTraining] = React.useState(false);
+  const [selectedTrainChord, setSelectedTrainChord] = React.useState(chords[0].id);
+  const [prediction, setPrediction] = React.useState<{chordName: string, confidence: number} | null>(null);
   const [detectedNotes, setDetectedNotes] = React.useState<{note: string, freq: number, amplitude: number}[]>([]);
+  const [trainingMessage, setTrainingMessage] = React.useState<{text: string, type: 'success'|'error'} | null>(null);
+  const [countdown, setCountdown] = React.useState<number | null>(null);
   const animationRef = React.useRef<number>();
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -29,6 +35,13 @@ const Gym: React.FC = () => {
         const analyzeLoop = () => {
           const notes = dspEngine.analyzeCurrentSpectrum();
           setDetectedNotes(notes);
+          
+          if (notes.length > 2 && !isTraining) {
+            const pred = chordClassifier.predict(notes);
+            setPrediction(pred);
+          } else {
+            setPrediction(null);
+          }
 
           // Draw spectrum
           const analyser = dspEngine.getAnalyser();
@@ -187,33 +200,157 @@ const Gym: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {detectedNotes.length > 2 && (
-                  <div style={{ 
-                    marginTop: '16px', 
-                    textAlign: 'center', 
-                    color: '#60a5fa', 
-                    fontSize: '1.1rem', 
-                    fontWeight: 800,
-                    textShadow: '0 0 10px rgba(96, 165, 250, 0.5)',
-                    padding: '8px',
-                    borderTop: '1px solid rgba(96, 165, 250, 0.2)'
-                  }}>
-                    {/* Basic chord guessing logic */}
-                    {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Do Mayor (C)"}
-                    {['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Sol Mayor (G)"}
-                    {['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: La Menor (Am)"}
-                    {['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) && "🎯 ACORDE DETECTADO: Re Mayor (D)"}
+                {/* Training Mode UI */}
+                {isTraining ? (
+                  <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(234, 179, 8, 0.1)', border: '1px solid #eab308', borderRadius: '8px' }}>
+                    <h5 style={{ color: '#facc15', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <BrainCircuit size={16} /> Modo Entrenamiento Activo
+                    </h5>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select 
+                        value={selectedTrainChord}
+                        onChange={(e) => setSelectedTrainChord(e.target.value)}
+                        style={{ flex: 1, padding: '8px', borderRadius: '4px', backgroundColor: '#1e293b', color: 'white', border: '1px solid #475569' }}
+                      >
+                        {chords.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={() => {
+                          if (countdown !== null || trainingMessage) return;
+                          
+                          // Fase 1: Preparación (3 segundos)
+                          setCountdown(3);
+                          let count = 3;
+                          
+                          const prepInterval = setInterval(() => {
+                            count -= 1;
+                            setCountdown(count);
+                            
+                            if (count === 0) {
+                              clearInterval(prepInterval);
+                              // Fase 2: Captura (esperamos 3s para capturar el sustain)
+                              setCountdown(-1); // Estado especial visual de captura
+                              
+                              let bestSpectrum: {note: string, freq: number, amplitude: number}[] = [];
+                              let captureTime = 3;
+                              
+                              const captureInterval = setInterval(() => {
+                                captureTime -= 0.5;
+                                const current = dspEngine.analyzeCurrentSpectrum();
+                                if (current.length > bestSpectrum.length) {
+                                  bestSpectrum = current;
+                                }
+                                
+                                if (captureTime <= 0) {
+                                  clearInterval(captureInterval);
+                                  setCountdown(null);
+                                  
+                                  const chordObj = chords.find(c => c.id === selectedTrainChord);
+                                  if (chordObj && bestSpectrum.length > 2) {
+                                    chordClassifier.train(chordObj.id, chordObj.name, bestSpectrum);
+                                    setTrainingMessage({ text: `✅ ¡Huella aprendida para ${chordObj.name}!`, type: 'success' });
+                                  } else {
+                                    setTrainingMessage({ text: '⚠️ No se escucharon suficientes cuerdas. Asegúrate de rasguear fuerte y dejarlo sonar.', type: 'error' });
+                                  }
+                                  
+                                  setTimeout(() => setTrainingMessage(null), 3000);
+                                }
+                              }, 500);
+                            }
+                          }, 1000);
+                        }}
+                        disabled={countdown !== null}
+                        style={{ 
+                          backgroundColor: countdown !== null ? (countdown === -1 ? '#ef4444' : '#475569') : '#eab308', 
+                          color: countdown !== null ? (countdown === -1 ? 'white' : '#94a3b8') : 'black', 
+                          border: 'none', 
+                          padding: '8px 16px', 
+                          borderRadius: '4px', 
+                          fontWeight: 'bold', 
+                          cursor: countdown !== null ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.3s'
+                        }}
+                      >
+                        {countdown !== null ? 
+                          (countdown === -1 ? '¡TOCA EL ACORDE AHORA!' : `Ubica tus dedos (${countdown})...`) : 
+                         'Capturar Huella'}
+                      </button>
+                    </div>
+                    {trainingMessage && (
+                      <div className="animate-fade-in" style={{ 
+                        marginTop: '12px', 
+                        padding: '8px', 
+                        backgroundColor: trainingMessage.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', 
+                        color: trainingMessage.type === 'success' ? '#10b981' : '#ef4444', 
+                        borderRadius: '4px', 
+                        textAlign: 'center', 
+                        fontWeight: 600,
+                        border: `1px solid ${trainingMessage.type === 'success' ? '#10b981' : '#ef4444'}`
+                      }}>
+                        {trainingMessage.text}
+                      </div>
+                    )}
                   </div>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setIsTraining(true)}
+                      style={{ marginTop: '16px', width: '100%', backgroundColor: 'transparent', color: '#eab308', border: '1px dashed #eab308', padding: '8px', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      Entrenar Modelo (Mejorar precisión)
+                    </button>
+                    
+                    {/* Machine Learning Guessing */}
+                    {prediction ? (
+                      <div style={{ 
+                        marginTop: '16px', 
+                        textAlign: 'center', 
+                        color: prediction.confidence > 80 ? '#34d399' : '#60a5fa', 
+                        fontSize: '1.1rem', 
+                        fontWeight: 800,
+                        textShadow: prediction.confidence > 80 ? '0 0 10px rgba(52, 211, 153, 0.5)' : '0 0 10px rgba(96, 165, 250, 0.5)',
+                        padding: '8px',
+                        borderTop: '1px solid rgba(255,255,255, 0.1)'
+                      }}>
+                        🧠 PREDICCIÓN IA: {prediction.chordName} ({prediction.confidence}% similitud)
+                      </div>
+                    ) : (
+                      detectedNotes.length > 2 && chordClassifier.getTrainedChordCount() === 0 && (
+                        <div style={{ 
+                          marginTop: '16px', 
+                          textAlign: 'center', 
+                          color: '#60a5fa', 
+                          fontSize: '1.1rem', 
+                          fontWeight: 800,
+                          textShadow: '0 0 10px rgba(96, 165, 250, 0.5)',
+                          padding: '8px',
+                          borderTop: '1px solid rgba(96, 165, 250, 0.2)'
+                        }}>
+                          {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Do Mayor (C) (Adivinanza Básica)" :
+                           ['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Sol Mayor (G) (Adivinanza Básica)" :
+                           ['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: La Menor (Am) (Adivinanza Básica)" :
+                           ['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Re Mayor (D) (Adivinanza Básica)" :
+                           <span style={{ color: '#94a3b8', fontSize: '0.8rem', textShadow: 'none', fontWeight: 'normal' }}>
+                             El modelo IA de alta precisión está vacío. Haz clic en "Entrenar Modelo" para guardar huellas.
+                           </span>}
+                        </div>
+                      )
+                    )}
+                  </>
                 )}
               </>
             )}
           </div>
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600, marginTop: '32px' }}>Librería de Acordes</h3>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600, marginTop: '32px' }}>
+          {isTraining ? 'Acorde en Entrenamiento' : 'Librería de Acordes'}
+        </h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-          {chords.map((chord, idx) => {
+          {chords.filter(c => !isTraining || c.id === selectedTrainChord).map((chord, idx) => {
             const minFret = Math.min(...chord.positions.map(p => p.fret));
             const startFret = minFret > 3 ? minFret - 1 : 1;
             return (
