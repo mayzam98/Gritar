@@ -63,9 +63,8 @@ export class PolyphonicDSP {
       this.microphone.mediaStream.getTracks().forEach(track => track.stop());
       this.microphone.disconnect();
     }
-    if (this.audioCtx) {
-      this.audioCtx.close();
-    }
+    // No cerramos this.audioCtx porque ahora es un contexto compartido con el AudioEngine
+    // Si lo cerramos, la guitarra digital deja de sonar y da error InvalidStateError
     this.isListening = false;
   }
 

@@ -7,6 +7,7 @@ interface FretboardVisualizerProps {
   fretCount?: number;
   mutedStrings?: number[];
   openStrings?: number[];
+  bassString?: number;
 }
 
 const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({ 
@@ -14,7 +15,8 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
   startFret = 1, 
   fretCount = 5,
   mutedStrings = [],
-  openStrings = []
+  openStrings = [],
+  bassString
 }) => {
   const height = 60;
   const marginTop = 10;
@@ -147,23 +149,37 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
       } else if (openStrings.includes(strNumber)) {
         indicator = 'O';
         color = '#22c55e'; // Green for open
-      } else {
-        return null;
       }
 
       return (
-        <text 
-          key={`ind-${strNumber}`}
-          x={marginLeft - 4} 
-          y={y} 
-          fill={color} 
-          fontSize="4" 
-          fontWeight="bold"
-          textAnchor="middle"
-          dominantBaseline="central"
-        >
-          {indicator}
-        </text>
+        <g key={`ind-${strNumber}`}>
+          {indicator && (
+            <text 
+              x={marginLeft - 4} 
+              y={y} 
+              fill={color} 
+              fontSize="4" 
+              fontWeight="bold"
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              {indicator}
+            </text>
+          )}
+          {strNumber === bassString && (
+            <text 
+              x={marginLeft - (indicator ? 8 : 4)} 
+              y={y} 
+              fill="#f59e0b" 
+              fontSize="4" 
+              fontWeight="bold"
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              B
+            </text>
+          )}
+        </g>
       );
     });
   };

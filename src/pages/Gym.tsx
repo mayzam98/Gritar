@@ -49,7 +49,13 @@ const Gym: React.FC = () => {
               const counts = buffer.reduce((acc, val) => { acc[val] = (acc[val] || 0) + 1; return acc; }, {} as Record<string, number>);
               const mostCommon = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
               
-              setPrediction({ chordName: mostCommon, confidence: pred.confidence });
+              // Histéresis: Para destronar al acorde actual, el nuevo debe dominar el buffer (>60% o 9/15 cuadros)
+              setPrediction(prev => {
+                if (!prev || counts[mostCommon] >= 9) {
+                  return { chordName: mostCommon, confidence: pred.confidence };
+                }
+                return { chordName: prev.chordName, confidence: pred.confidence };
+              });
             } else {
               setPrediction(null);
             }
@@ -348,17 +354,17 @@ const Gym: React.FC = () => {
                       <div style={{ 
                         marginTop: '16px', 
                         textAlign: 'center', 
-                        color: prediction.confidence > 80 ? '#34d399' : '#60a5fa', 
+                        color: prediction.confidence > 80 ? '#34d399' : prediction.confidence > 40 ? '#60a5fa' : '#ef4444', 
                         fontSize: '1.1rem', 
                         fontWeight: 800,
-                        textShadow: prediction.confidence > 80 ? '0 0 10px rgba(52, 211, 153, 0.5)' : '0 0 10px rgba(96, 165, 250, 0.5)',
+                        textShadow: prediction.confidence > 80 ? '0 0 10px rgba(52, 211, 153, 0.5)' : prediction.confidence > 40 ? '0 0 10px rgba(96, 165, 250, 0.5)' : '0 0 10px rgba(239, 68, 68, 0.5)',
                         padding: '8px',
                         borderTop: '1px solid rgba(255,255,255, 0.1)'
                       }}>
                         🧠 PREDICCIÓN IA: {prediction.chordName} ({prediction.confidence}% similitud)
                       </div>
                     ) : (
-                      detectedNotes.length > 2 && chordClassifier.getTrainedChordCount() === 0 && (
+                      detectedNotes.length > 2 && (
                         <div style={{ 
                           marginTop: '16px', 
                           textAlign: 'center', 
@@ -369,13 +375,19 @@ const Gym: React.FC = () => {
                           padding: '8px',
                           borderTop: '1px solid rgba(96, 165, 250, 0.2)'
                         }}>
-                          {['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Do Mayor (C) (Adivinanza Básica)" :
-                           ['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Sol Mayor (G) (Adivinanza Básica)" :
-                           ['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: La Menor (Am) (Adivinanza Básica)" :
-                           ['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Re Mayor (D) (Adivinanza Básica)" :
-                           <span style={{ color: '#94a3b8', fontSize: '0.8rem', textShadow: 'none', fontWeight: 'normal' }}>
-                             El modelo IA de alta precisión está vacío. Haz clic en "Entrenar Modelo" para guardar huellas.
-                           </span>}
+                          {chordClassifier.getTrainedChordCount() === 0 ? (
+                            ['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Do Mayor (C) (Adivinanza Básica)" :
+                            ['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Sol Mayor (G) (Adivinanza Básica)" :
+                            ['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: La Menor (Am) (Adivinanza Básica)" :
+                            ['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Re Mayor (D) (Adivinanza Básica)" :
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', textShadow: 'none', fontWeight: 'normal' }}>
+                              El modelo IA de alta precisión está vacío. Haz clic en "Entrenar Modelo" para guardar huellas.
+                            </span>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.9rem', textShadow: 'none', fontWeight: 'normal' }}>
+                              Escuchando... IA analizando (Confianza &lt; 10%, {chordClassifier.getModelSize()} huellas en memoria)
+                            </span>
+                          )}
                         </div>
                       )
                     )}
@@ -419,6 +431,7 @@ const Gym: React.FC = () => {
                     fretCount={5} 
                     mutedStrings={chord.mutedStrings}
                     openStrings={chord.openStrings}
+                    bassString={chord.bassString}
                   />
                 </div>
 

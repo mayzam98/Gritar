@@ -1,7 +1,8 @@
 export interface ChordFingerprint {
   chordId: string;
   chordName: string;
-  features: { note: string; freq?: number; amplitude: number }[];
+  vector: Record<string, number>;
+  magnitude: number;
 }
 
 export class ChordClassifier {
@@ -12,65 +13,95 @@ export class ChordClassifier {
     this.loadModel();
   }
 
-  /**
-   * Guarda una nueva huella de sonido en el modelo
-   */
   public train(chordId: string, chordName: string, features: { note: string; freq?: number; amplitude: number }[]): void {
     if (features.length === 0) return;
     
-    // Normalizar amplitudes para que no dependa del volumen del micrófono
     const maxAmplitude = Math.max(...features.map(f => f.amplitude));
-    
-    // Identificar el bajo (la nota con menor frecuencia) para darle mayor peso
     const lowestFreqNote = features.reduce((prev, curr) => (curr.freq !== undefined && prev.freq !== undefined && curr.freq < prev.freq) ? curr : prev, features[0]);
 
-    const normalizedFeatures = features.map(f => ({
-      note: f.note,
-      amplitude: ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1) // 2.5x peso al bajo
-    }));
+    const vector: Record<string, number> = {};
+    let sumSquares = 0;
+
+    features.forEach(f => {
+      const normalizedAmp = ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1);
+      vector[f.note] = normalizedAmp;
+      sumSquares += normalizedAmp * normalizedAmp;
+    });
 
     this.model.push({
       chordId,
       chordName,
-      features: normalizedFeatures
+      vector,
+      magnitude: Math.sqrt(sumSquares)
     });
 
     this.saveModel();
   }
 
-  /**
-   * Predice el acorde basado en K-Nearest Neighbors (K=1) y Similitud Coseno
-   */
   public predict(currentFeatures: { note: string; freq?: number; amplitude: number }[]): { chordName: string, confidence: number } | null {
     if (this.model.length === 0 || currentFeatures.length === 0) return null;
 
+    // Squelch Dinámico: Filtro de silencio absoluto (RMS o energía total)
+    let totalEnergy = 0;
+    currentFeatures.forEach(f => totalEnergy += Math.max(0, f.amplitude + 100)); // +100 para volver positivos los dB
+    if (totalEnergy < 50) return null; // Umbral de energía mínima para evitar procesar siseos
+
     const maxAmplitude = Math.max(...currentFeatures.map(f => f.amplitude));
-    
-    // Identificar el bajo en el acorde actual
     const lowestFreqNote = currentFeatures.reduce((prev, curr) => (curr.freq !== undefined && prev.freq !== undefined && curr.freq < prev.freq) ? curr : prev, currentFeatures[0]);
 
-    const normalizedCurrent = currentFeatures.map(f => ({
-      note: f.note,
-      amplitude: ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1)
-    }));
+    const currentVector: Record<string, number> = {};
+    let currentSumSquares = 0;
 
-    let bestMatch = null;
-    let highestSimilarity = -1;
+    currentFeatures.forEach(f => {
+      const normalizedAmp = ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1);
+      currentVector[f.note] = normalizedAmp;
+      currentSumSquares += normalizedAmp * normalizedAmp;
+    });
 
-    for (const fingerprint of this.model) {
-      const similarity = this.calculateCosineSimilarity(normalizedCurrent, fingerprint.features);
-      if (similarity > highestSimilarity) {
-        highestSimilarity = similarity;
-        bestMatch = fingerprint;
+    const currentMagnitude = Math.sqrt(currentSumSquares);
+    if (currentMagnitude === 0) return null;
+
+    const similarities = this.model.map(fingerprint => {
+      let dotProduct = 0;
+      let missingPenalty = 0;
+      
+      const allNotes = new Set([...Object.keys(currentVector), ...Object.keys(fingerprint.vector)]);
+      for (const note of allNotes) {
+        const valA = currentVector[note] || 0;
+        const valB = fingerprint.vector[note] || 0;
+        dotProduct += valA * valB;
+        
+        if ((valA > 0.3 && valB === 0) || (valB > 0.3 && valA === 0)) {
+          missingPenalty += 0.15;
+        }
       }
+      
+      const rawSimilarity = dotProduct / (currentMagnitude * fingerprint.magnitude);
+      return {
+        chordName: fingerprint.chordName,
+        similarity: Math.max(0, rawSimilarity - missingPenalty)
+      };
+    });
+
+    similarities.sort((a, b) => b.similarity - a.similarity);
+    const kNearest = similarities.slice(0, 3);
+    
+    // Votación simple de los top K=3
+    const votes: Record<string, number> = {};
+    for (const match of kNearest) {
+      votes[match.chordName] = (votes[match.chordName] || 0) + match.similarity;
     }
 
-    // Si la similitud es muy baja, no estamos seguros
-    if (highestSimilarity < 0.3) return null;
+    const bestChord = Object.keys(votes).reduce((a, b) => votes[a] > votes[b] ? a : b);
+    const highestConfidence = kNearest.find(k => k.chordName === bestChord)?.similarity || 0;
+
+    // Umbral de Confianza Estricto (Squelch Dinámico)
+    // Evita falsos positivos. Si no se parece en un 70%, es ruido.
+    if (highestConfidence < 0.70) return null;
 
     return {
-      chordName: bestMatch!.chordName,
-      confidence: Math.round(highestSimilarity * 100)
+      chordName: bestChord,
+      confidence: Math.round(highestConfidence * 100)
     };
   }
 
@@ -88,40 +119,6 @@ export class ChordClassifier {
     localStorage.removeItem(this.STORAGE_KEY);
   }
 
-  /**
-   * Similitud Coseno adaptada con penalización por notas faltantes (Jaccard híbrido)
-   */
-  private calculateCosineSimilarity(
-    vecA: { note: string; amplitude: number }[],
-    vecB: { note: string; amplitude: number }[]
-  ): number {
-    const allNotes = new Set([...vecA.map(v => v.note), ...vecB.map(v => v.note)]);
-    
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-    let missingPenalty = 0;
-
-    for (const note of allNotes) {
-      const valA = vecA.find(v => v.note === note)?.amplitude || 0;
-      const valB = vecB.find(v => v.note === note)?.amplitude || 0;
-      
-      dotProduct += valA * valB;
-      normA += valA * valA;
-      normB += valB * valB;
-      
-      // Penalizar fuertemente si una nota clave existe en el modelo pero no en lo que tocó el usuario (y viceversa)
-      if ((valA > 0.3 && valB === 0) || (valB > 0.3 && valA === 0)) {
-        missingPenalty += 0.15; 
-      }
-    }
-
-    if (normA === 0 || normB === 0) return 0;
-    const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-    
-    return Math.max(0, similarity - missingPenalty);
-  }
-
   private saveModel(): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.model));
@@ -134,7 +131,26 @@ export class ChordClassifier {
     try {
       const data = localStorage.getItem(this.STORAGE_KEY);
       if (data) {
-        this.model = JSON.parse(data);
+        const parsed = JSON.parse(data);
+        // Compatibilidad hacia atrás si la base de datos era array de objetos old style
+        this.model = parsed.map((item: any) => {
+          if (item.vector && item.magnitude) return item; // Ya optimizado
+          
+          const vector: Record<string, number> = {};
+          let sumSquares = 0;
+          if (item.features) {
+            item.features.forEach((f: any) => {
+              vector[f.note] = f.amplitude;
+              sumSquares += f.amplitude * f.amplitude;
+            });
+          }
+          return {
+            chordId: item.chordId,
+            chordName: item.chordName,
+            vector,
+            magnitude: Math.sqrt(sumSquares)
+          };
+        });
       }
     } catch (e) {
       console.error("Error cargando el modelo DSP", e);
