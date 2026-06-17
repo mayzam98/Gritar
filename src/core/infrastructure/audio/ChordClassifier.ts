@@ -1,7 +1,7 @@
 export interface ChordFingerprint {
   chordId: string;
   chordName: string;
-  features: { note: string; amplitude: number }[];
+  features: { note: string; freq?: number; amplitude: number }[];
 }
 
 export class ChordClassifier {
@@ -15,14 +15,14 @@ export class ChordClassifier {
   /**
    * Guarda una nueva huella de sonido en el modelo
    */
-  public train(chordId: string, chordName: string, features: { note: string; amplitude: number }[]): void {
+  public train(chordId: string, chordName: string, features: { note: string; freq?: number; amplitude: number }[]): void {
     if (features.length === 0) return;
     
     // Normalizar amplitudes para que no dependa del volumen del micrófono
     const maxAmplitude = Math.max(...features.map(f => f.amplitude));
     
     // Identificar el bajo (la nota con menor frecuencia) para darle mayor peso
-    const lowestFreqNote = features.reduce((prev, curr) => (current.freq !== undefined && curr.freq < prev.freq) ? curr : prev, features[0]);
+    const lowestFreqNote = features.reduce((prev, curr) => (curr.freq !== undefined && prev.freq !== undefined && curr.freq < prev.freq) ? curr : prev, features[0]);
 
     const normalizedFeatures = features.map(f => ({
       note: f.note,
@@ -41,13 +41,13 @@ export class ChordClassifier {
   /**
    * Predice el acorde basado en K-Nearest Neighbors (K=1) y Similitud Coseno
    */
-  public predict(currentFeatures: { note: string; amplitude: number }[]): { chordName: string, confidence: number } | null {
+  public predict(currentFeatures: { note: string; freq?: number; amplitude: number }[]): { chordName: string, confidence: number } | null {
     if (this.model.length === 0 || currentFeatures.length === 0) return null;
 
     const maxAmplitude = Math.max(...currentFeatures.map(f => f.amplitude));
     
     // Identificar el bajo en el acorde actual
-    const lowestFreqNote = currentFeatures.reduce((prev, curr) => (curr.freq !== undefined && curr.freq < prev.freq) ? curr : prev, currentFeatures[0]);
+    const lowestFreqNote = currentFeatures.reduce((prev, curr) => (curr.freq !== undefined && prev.freq !== undefined && curr.freq < prev.freq) ? curr : prev, currentFeatures[0]);
 
     const normalizedCurrent = currentFeatures.map(f => ({
       note: f.note,
