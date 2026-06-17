@@ -37,6 +37,19 @@ const Sequencer: React.FC = () => {
     });
   });
 
+  if (initialState && initialState.chordDetails) {
+    initialState.chordDetails.forEach((detail: any) => {
+      if (!repertoireChords.find(c => c.name === detail.chord)) {
+        repertoireChords.push({
+          id: `imported-${detail.chord}`,
+          name: detail.chord,
+          positions: detail.positions,
+          startFret: detail.startFret || 1,
+        });
+      }
+    });
+  }
+
   const labChords: any[] = [];
   (discoveries || []).filter(d => d.type === 'chord').forEach(d => {
     labChords.push({
@@ -98,14 +111,30 @@ const Sequencer: React.FC = () => {
       const initialBlocks: SequenceBlock[] = [];
       const defaultRhythm = initialState.rhythm ? { name: initialState.rhythm.name, pattern: initialState.rhythm.pattern } : initialRhythms[0];
       
-      if (initialState.chordA) {
-        const chordA = allAvailableChords.find(c => c.name === initialState.chordA) || allAvailableChords[0];
-        initialBlocks.push({ id: crypto.randomUUID(), chord: chordA, rhythm: defaultRhythm });
+      if (initialState.chords && Array.isArray(initialState.chords) && initialState.chords.length > 0) {
+        initialState.chords.forEach((chordName: string) => {
+          const chord = allAvailableChords.find(c => 
+            c.name === chordName || 
+            c.id.toLowerCase() === chordName.toLowerCase() || 
+            c.name.includes(`(${chordName})`)
+          ) || allAvailableChords[0];
+          
+          if (chord) {
+            initialBlocks.push({ id: crypto.randomUUID(), chord, rhythm: defaultRhythm });
+          }
+        });
+      } else {
+        // Fallback to legacy chordA / chordB just in case
+        if (initialState.chordA) {
+          const chordA = allAvailableChords.find(c => c.name === initialState.chordA || c.name.includes(`(${initialState.chordA})`)) || allAvailableChords[0];
+          initialBlocks.push({ id: crypto.randomUUID(), chord: chordA, rhythm: defaultRhythm });
+        }
+        if (initialState.chordB) {
+          const chordB = allAvailableChords.find(c => c.name === initialState.chordB || c.name.includes(`(${initialState.chordB})`)) || allAvailableChords[0];
+          initialBlocks.push({ id: crypto.randomUUID(), chord: chordB, rhythm: defaultRhythm });
+        }
       }
-      if (initialState.chordB) {
-        const chordB = allAvailableChords.find(c => c.name === initialState.chordB) || allAvailableChords[0];
-        initialBlocks.push({ id: crypto.randomUUID(), chord: chordB, rhythm: defaultRhythm });
-      }
+      
       setBlocks(initialBlocks);
       if (initialBlocks.length > 0) {
         setSelectedBlockId(initialBlocks[0].id);
@@ -285,20 +314,46 @@ const Sequencer: React.FC = () => {
               {(() => {
                 const isCurrentlyPlaying = isPlaying && blocks.length > 1 && activeBlockIndex >= 0;
                 let tLines = undefined;
+                let nextPos = undefined;
                 
                 if (isCurrentlyPlaying) {
                   const nextBlockIdx = (activeBlockIndex + 1) % blocks.length;
                   const nextChord = blocks[nextBlockIdx]?.chord;
                   
                   if (activeChord && nextChord && activeChord.name !== nextChord.name) {
-                    const analysis = analyzeTransition(activeChord.positions || [], nextChord.positions || []);
-                    tLines = analysis.steps.filter(s => s.distance > 0 && s.fromString > 0 && s.toString > 0).map(s => ({
-                      fromString: s.fromString,
-                      fromFret: s.fromFret,
-                      toString: s.toString,
-                      toFret: s.toFret,
-                      color: 'rgba(59, 130, 246, 0.6)'
-                    }));
+                    nextPos = nextChord.positions || [];
+                    
+                    // Custom shortest-distance matching for Sequencer visual lines to avoid criss-crossing
+                    const posA = [...(activeChord.positions || [])];
+                    const posB = [...nextPos];
+                    tLines = [];
+                    
+                    while(posA.length > 0 && posB.length > 0) {
+                      let best = { a: 0, b: 0, d: Infinity };
+                      for(let i=0; i<posA.length; i++) {
+                        for(let j=0; j<posB.length; j++) {
+                          // Distance: prioritize moving to same string, then adjacent frets
+                          const dStr = Math.abs(posA[i].string - posB[j].string);
+                          const dFret = Math.abs(posA[i].fret - posB[j].fret);
+                          const d = (dStr * 3) + dFret; // String changes cost more visually
+                          if(d < best.d) best = { a: i, b: j, d };
+                        }
+                      }
+                      const from = posA[best.a];
+                      const to = posB[best.b];
+                      
+                      // Only draw line if there's actual movement
+                      if (from.string !== to.string || from.fret !== to.fret) {
+                        tLines.push({
+                          fromString: from.string, fromFret: from.fret,
+                          toString: to.string, toFret: to.fret,
+                          color: 'rgba(59, 130, 246, 0.6)'
+                        });
+                      }
+                      
+                      posA.splice(best.a, 1);
+                      posB.splice(best.b, 1);
+                    }
                   }
                 }
 
@@ -311,6 +366,7 @@ const Sequencer: React.FC = () => {
                     mutedStrings={activeChord?.mutedStrings}
                     openStrings={activeChord?.openStrings}
                     transitionLines={tLines}
+                    nextPositions={nextPos}
                   />
                 );
               })()}

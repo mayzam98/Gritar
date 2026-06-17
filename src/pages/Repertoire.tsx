@@ -403,14 +403,9 @@ const Repertoire: React.FC = () => {
                             </button>
                             <button
                               onClick={() => {
-                                const uniqueChords = Array.from(new Set(analysisResult.chords || []));
-                                const chordA = uniqueChords[0] || 'C';
-                                const chordB = uniqueChords[1] || 'G';
-                                
                                 navigate('/secuenciador', {
                                   state: {
-                                    chordA,
-                                    chordB,
+                                    chords: analysisResult.chords || [], // Send the full progression
                                     chordDetails: analysisResult.chordDetails || [],
                                     rhythm: {
                                       name: sp.name,

@@ -19,6 +19,7 @@ interface FretboardVisualizerProps {
   bassString?: number;
   isAnimating?: boolean; // Used to trigger slower/smoother transitions if needed
   transitionLines?: TransitionLine[];
+  nextPositions?: Position[];
 }
 
 const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({ 
@@ -29,7 +30,8 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
   openStrings = [],
   bassString,
   isAnimating = true,
-  transitionLines = []
+  transitionLines = [],
+  nextPositions = []
 }) => {
   const height = 60;
   const marginTop = 10;
@@ -163,6 +165,43 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
     });
   };
 
+  const renderNextPositions = () => {
+    if (!nextPositions || nextPositions.length === 0) return null;
+
+    return nextPositions.map((pos, idx) => {
+      if (pos.fret >= startFret && pos.fret < startFret + fretCount) {
+        const relativeFret = pos.fret - startFret;
+        const x = marginLeft + (relativeFret + 0.5) * fretWidth;
+        const y = getStringY(pos.string);
+        
+        return (
+          <g key={`next-pos-${idx}`}>
+            <circle 
+              cx={x} cy={y} r={3}
+              fill="transparent" 
+              stroke="rgba(234, 179, 8, 0.6)"
+              strokeWidth="0.5"
+              strokeDasharray="1,1"
+            />
+            {pos.finger && (
+              <text 
+                x={x} y={y} 
+                fill="rgba(234, 179, 8, 0.6)" 
+                fontSize="3.5" 
+                fontWeight="bold"
+                textAnchor="middle" 
+                dominantBaseline="central"
+              >
+                {pos.finger}
+              </text>
+            )}
+          </g>
+        );
+      }
+      return null;
+    });
+  };
+
   const renderTransitionLines = () => {
     if (!transitionLines || transitionLines.length === 0) return null;
 
@@ -285,6 +324,7 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
         {renderFrets()}
         {renderStrings()}
         {renderMarkers()}
+        {renderNextPositions()}
         {renderTransitionLines()}
         {renderPositions()}
       </svg>
