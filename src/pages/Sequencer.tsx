@@ -213,7 +213,7 @@ const Sequencer: React.FC = () => {
         // Play sound for current step
         const stepSymbol = currentBlock.rhythm.pattern[stepIdx];
         if (stepSymbol && stepSymbol !== '-' && audioCtxRef.current) {
-          playTick(audioCtxRef.current, stepSymbol === 'B');
+          playTick(audioCtxRef.current, stepSymbol);
         }
 
         // Update UI State
@@ -239,22 +239,37 @@ const Sequencer: React.FC = () => {
     return () => clearInterval(interval);
   }, [isPlaying, bpm, blocks]);
 
-  const playTick = (ctx: AudioContext, isBass: boolean) => {
+  const playTick = (ctx: AudioContext, symbol: string) => {
+    const isBass = symbol === 'B';
+    const isMute = symbol === 'X' || symbol === '↓X' || symbol === '↑X';
+    
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
     
     osc.connect(gainNode);
     gainNode.connect(ctx.destination);
     
-    osc.type = isBass ? 'sine' : 'triangle';
-    osc.frequency.setValueAtTime(isBass ? 110 : 880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    
-    gainNode.gain.setValueAtTime(1, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.1);
+    if (isMute) {
+      // Percussive "chuck" sound for mute
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.05);
+      gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.05);
+    } else {
+      // Standard sounds
+      osc.type = isBass ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(isBass ? 110 : 880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(isBass ? 55 : 440, ctx.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(isBass ? 0.8 : 0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (isBass ? 0.3 : 0.1));
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + (isBass ? 0.3 : 0.1));
+    }
   };
 
   const activeChord = blocks[activeBlockIndex]?.chord || (selectedBlockId ? blocks.find(b => b.id === selectedBlockId)?.chord : blocks[0]?.chord) || CORE_CHORDS[0];

@@ -9,7 +9,7 @@ export interface StrummingVisualizerProps {
   onChange?: (newSteps: string[]) => void;
 }
 
-const SYMBOLS = ['↓', '↑', 'X', 'B', '-', '↓X'];
+const SYMBOLS = ['↓', '↑', '↓X', '↑X', 'B', '-'];
 
 const StrummingVisualizer: React.FC<StrummingVisualizerProps> = ({ steps, currentBeat = 0, size = 'md', isEditable = false, onChange }) => {
   const containerStyle = {
@@ -23,8 +23,8 @@ const StrummingVisualizer: React.FC<StrummingVisualizerProps> = ({ steps, curren
   };
 
   const getFontSize = (step: string) => {
-    if (size === 'sm') return step === 'B' || step === 'X' || step === '↓X' ? '1.2rem' : '1.5rem';
-    return step === 'B' || step === 'X' || step === '↓X' ? '1.5rem' : '2rem';
+    if (size === 'sm') return step === 'B' || step === 'X' || step === '↓X' || step === '↑X' ? '1.2rem' : '1.5rem';
+    return step === 'B' || step === 'X' || step === '↓X' || step === '↑X' ? '1.5rem' : '2rem';
   };
 
   const handleCycleSymbol = (idx: number) => {
@@ -59,7 +59,7 @@ const StrummingVisualizer: React.FC<StrummingVisualizerProps> = ({ steps, curren
         let stepColor = '#94a3b8'; // Default grey
         if (isActive) {
           if (step === 'B') stepColor = '#10b981'; // Emerald for Bass
-          else if (step === 'X' || step === '↓X') stepColor = '#ef4444'; // Red for Mute/Slap
+          else if (step === 'X' || step === '↓X' || step === '↑X') stepColor = '#ef4444'; // Red for Mute/Slap
           else if (i === 0) stepColor = '#3b82f6'; // Blue for first beat
           else stepColor = '#eab308'; // Yellow for others
         }
