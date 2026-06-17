@@ -8,7 +8,7 @@ import { CORE_CHORDS } from '../core/domain/ChordDictionary';
 import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
 import { dspEngine } from '../core/infrastructure/audio/PolyphonicDSP';
 import { chordClassifier } from '../core/infrastructure/audio/ChordClassifier';
-import { Volume2, Mic, Activity, BrainCircuit } from 'lucide-react';
+import { Volume2, Mic, Activity, BrainCircuit, X, Trash2 } from 'lucide-react';
 
 const Gym: React.FC = () => {
   const chords = CORE_CHORDS;
@@ -19,7 +19,9 @@ const Gym: React.FC = () => {
   const [detectedNotes, setDetectedNotes] = React.useState<{note: string, freq: number, amplitude: number}[]>([]);
   const [trainingMessage, setTrainingMessage] = React.useState<{text: string, type: 'success'|'error'} | null>(null);
   const [countdown, setCountdown] = React.useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
   const animationRef = React.useRef<number>();
+  const predictionBufferRef = React.useRef<string[]>([]);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   const toggleDSP = async () => {
@@ -28,6 +30,7 @@ const Gym: React.FC = () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       setIsListening(false);
       setDetectedNotes([]);
+      predictionBufferRef.current = [];
     } else {
       try {
         await dspEngine.startMicrophone();
@@ -38,9 +41,21 @@ const Gym: React.FC = () => {
           
           if (notes.length > 2 && !isTraining) {
             const pred = chordClassifier.predict(notes);
-            setPrediction(pred);
+            if (pred) {
+              const buffer = predictionBufferRef.current;
+              buffer.push(pred.chordName);
+              if (buffer.length > 15) buffer.shift();
+              
+              const counts = buffer.reduce((acc, val) => { acc[val] = (acc[val] || 0) + 1; return acc; }, {} as Record<string, number>);
+              const mostCommon = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+              
+              setPrediction({ chordName: mostCommon, confidence: pred.confidence });
+            } else {
+              setPrediction(null);
+            }
           } else {
             setPrediction(null);
+            predictionBufferRef.current = [];
           }
 
           // Draw spectrum
@@ -203,9 +218,35 @@ const Gym: React.FC = () => {
                 {/* Training Mode UI */}
                 {isTraining ? (
                   <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(234, 179, 8, 0.1)', border: '1px solid #eab308', borderRadius: '8px' }}>
-                    <h5 style={{ color: '#facc15', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <BrainCircuit size={16} /> Modo Entrenamiento Activo
-                    </h5>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <h5 style={{ color: '#facc15', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <BrainCircuit size={16} /> Modo Entrenamiento
+                      </h5>
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <button 
+                          onClick={() => {
+                            if (confirmDelete) {
+                              chordClassifier.clearModel();
+                              setTrainingMessage({ text: '🗑️ Modelo borrado desde cero.', type: 'success' });
+                              setTimeout(() => setTrainingMessage(null), 3000);
+                              setConfirmDelete(false);
+                            } else {
+                              setConfirmDelete(true);
+                              setTimeout(() => setConfirmDelete(false), 3000);
+                            }
+                          }}
+                          style={{ backgroundColor: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}
+                        >
+                          <Trash2 size={16} /> {confirmDelete ? '¿Seguro? Clic para borrar' : 'Borrar Todo'}
+                        </button>
+                        <button 
+                          onClick={() => setIsTraining(false)}
+                          style={{ backgroundColor: 'transparent', border: 'none', color: '#eab308', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <X size={18} /> Cerrar
+                        </button>
+                      </div>
+                    </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <select 
                         value={selectedTrainChord}

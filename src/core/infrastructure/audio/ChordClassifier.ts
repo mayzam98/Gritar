@@ -20,9 +20,13 @@ export class ChordClassifier {
     
     // Normalizar amplitudes para que no dependa del volumen del micrófono
     const maxAmplitude = Math.max(...features.map(f => f.amplitude));
+    
+    // Identificar el bajo (la nota con menor frecuencia) para darle mayor peso
+    const lowestFreqNote = features.reduce((prev, curr) => (current.freq !== undefined && curr.freq < prev.freq) ? curr : prev, features[0]);
+
     const normalizedFeatures = features.map(f => ({
       note: f.note,
-      amplitude: (f.amplitude + 100) / (maxAmplitude + 100) // Rango 0-1 aproximado
+      amplitude: ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1) // 2.5x peso al bajo
     }));
 
     this.model.push({
@@ -41,9 +45,13 @@ export class ChordClassifier {
     if (this.model.length === 0 || currentFeatures.length === 0) return null;
 
     const maxAmplitude = Math.max(...currentFeatures.map(f => f.amplitude));
+    
+    // Identificar el bajo en el acorde actual
+    const lowestFreqNote = currentFeatures.reduce((prev, curr) => (curr.freq !== undefined && curr.freq < prev.freq) ? curr : prev, currentFeatures[0]);
+
     const normalizedCurrent = currentFeatures.map(f => ({
       note: f.note,
-      amplitude: (f.amplitude + 100) / (maxAmplitude + 100)
+      amplitude: ((f.amplitude + 100) / (maxAmplitude + 100)) * (f.note === lowestFreqNote?.note ? 2.5 : 1)
     }));
 
     let bestMatch = null;
@@ -81,7 +89,7 @@ export class ChordClassifier {
   }
 
   /**
-   * Similitud Coseno adaptada para diccionarios de características categóricas (Notas)
+   * Similitud Coseno adaptada con penalización por notas faltantes (Jaccard híbrido)
    */
   private calculateCosineSimilarity(
     vecA: { note: string; amplitude: number }[],
@@ -92,6 +100,7 @@ export class ChordClassifier {
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
+    let missingPenalty = 0;
 
     for (const note of allNotes) {
       const valA = vecA.find(v => v.note === note)?.amplitude || 0;
@@ -100,10 +109,17 @@ export class ChordClassifier {
       dotProduct += valA * valB;
       normA += valA * valA;
       normB += valB * valB;
+      
+      // Penalizar fuertemente si una nota clave existe en el modelo pero no en lo que tocó el usuario (y viceversa)
+      if ((valA > 0.3 && valB === 0) || (valB > 0.3 && valA === 0)) {
+        missingPenalty += 0.15; 
+      }
     }
 
     if (normA === 0 || normB === 0) return 0;
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    
+    return Math.max(0, similarity - missingPenalty);
   }
 
   private saveModel(): void {
