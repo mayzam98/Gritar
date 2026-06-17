@@ -323,26 +323,48 @@ const Sequencer: React.FC = () => {
                   if (activeChord && nextChord && activeChord.name !== nextChord.name) {
                     nextPos = nextChord.positions || [];
                     
-                    // Custom shortest-distance matching for Sequencer visual lines to avoid criss-crossing
                     const posA = [...(activeChord.positions || [])];
                     const posB = [...nextPos];
                     tLines = [];
                     
+                    // 1. First, perfectly match by finger number (respect actual fingering)
+                    for (let i = posA.length - 1; i >= 0; i--) {
+                      const fingerA = posA[i].finger;
+                      if (fingerA) {
+                        const matchIndexB = posB.findIndex(p => p.finger === fingerA);
+                        if (matchIndexB !== -1) {
+                          const from = posA[i];
+                          const to = posB[matchIndexB];
+                          
+                          if (from.string !== to.string || from.fret !== to.fret) {
+                            tLines.push({
+                              fromString: from.string, fromFret: from.fret,
+                              toString: to.string, toFret: to.fret,
+                              color: 'rgba(59, 130, 246, 0.6)'
+                            });
+                          }
+                          // Remove matched dots
+                          posA.splice(i, 1);
+                          posB.splice(matchIndexB, 1);
+                        }
+                      }
+                    }
+                    
+                    // 2. For any remaining dots (either missing finger numbers, or mismatched), 
+                    // we map them by shortest visual distance just to keep the animation clean.
                     while(posA.length > 0 && posB.length > 0) {
                       let best = { a: 0, b: 0, d: Infinity };
                       for(let i=0; i<posA.length; i++) {
                         for(let j=0; j<posB.length; j++) {
-                          // Distance: prioritize moving to same string, then adjacent frets
                           const dStr = Math.abs(posA[i].string - posB[j].string);
                           const dFret = Math.abs(posA[i].fret - posB[j].fret);
-                          const d = (dStr * 3) + dFret; // String changes cost more visually
+                          const d = (dStr * 3) + dFret;
                           if(d < best.d) best = { a: i, b: j, d };
                         }
                       }
                       const from = posA[best.a];
                       const to = posB[best.b];
                       
-                      // Only draw line if there's actual movement
                       if (from.string !== to.string || from.fret !== to.fret) {
                         tLines.push({
                           fromString: from.string, fromFret: from.fret,

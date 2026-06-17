@@ -178,15 +178,15 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
           <g key={`next-pos-${idx}`}>
             <circle 
               cx={x} cy={y} r={3}
-              fill="transparent" 
-              stroke="rgba(234, 179, 8, 0.6)"
+              fill="rgba(0,0,0,0.4)" 
+              stroke="rgba(250, 204, 21, 0.8)"
               strokeWidth="0.5"
               strokeDasharray="1,1"
             />
             {pos.finger && (
               <text 
                 x={x} y={y} 
-                fill="rgba(234, 179, 8, 0.6)" 
+                fill="#facc15" 
                 fontSize="3.5" 
                 fontWeight="bold"
                 textAnchor="middle" 
