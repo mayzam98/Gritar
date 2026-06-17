@@ -25,6 +25,13 @@ export interface Discovery {
   createdAt: number;
 }
 
+export interface CustomRhythm {
+  id: string;
+  name: string;
+  pattern: string[];
+  createdAt: number;
+}
+
 export interface Composition {
   id: string;
   title: string;
@@ -55,6 +62,11 @@ interface AppState {
   discoveries: Discovery[];
   addDiscovery: (discovery: Omit<Discovery, 'id' | 'createdAt'>) => void;
   deleteDiscovery: (id: string) => void;
+
+  // Custom Rhythms
+  customRhythms: CustomRhythm[];
+  addCustomRhythm: (rhythm: Omit<CustomRhythm, 'id' | 'createdAt'>) => void;
+  deleteCustomRhythm: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -106,11 +118,19 @@ export const useAppStore = create<AppState>()(
 
       discoveries: [],
       addDiscovery: (discovery) => set((state) => ({
-        discoveries: [{ ...discovery, id: uuidv4(), createdAt: Date.now() }, ...state.discoveries]
+        discoveries: [...state.discoveries, { ...discovery, id: uuidv4(), createdAt: Date.now() }]
       })),
       deleteDiscovery: (id) => set((state) => ({
         discoveries: state.discoveries.filter(d => d.id !== id)
-      }))
+      })),
+      
+      customRhythms: [],
+      addCustomRhythm: (rhythm) => set((state) => ({
+        customRhythms: [...state.customRhythms, { ...rhythm, id: uuidv4(), createdAt: Date.now() }]
+      })),
+      deleteCustomRhythm: (id) => set((state) => ({
+        customRhythms: state.customRhythms.filter(r => r.id !== id)
+      })),
     }),
     {
       name: 'gritar-storage',

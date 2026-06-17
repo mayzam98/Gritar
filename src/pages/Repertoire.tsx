@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot, Plus, ArrowRightLeft } from 'lucide-react';
+import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot, Plus, ArrowRightLeft, ListMusic } from 'lucide-react';
 import { AiProviderType } from '../core/domain/AiProvider';
 import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
@@ -399,7 +399,30 @@ const Repertoire: React.FC = () => {
                               className="btn btn-primary"
                               style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)' }}
                             >
-                              <ArrowRightLeft size={12} /> Practicar Transiciones
+                              <ArrowRightLeft size={12} /> Transiciones
+                            </button>
+                            <button
+                              onClick={() => {
+                                const uniqueChords = Array.from(new Set(analysisResult.chords || []));
+                                const chordA = uniqueChords[0] || 'C';
+                                const chordB = uniqueChords[1] || 'G';
+                                
+                                navigate('/secuenciador', {
+                                  state: {
+                                    chordA,
+                                    chordB,
+                                    chordDetails: analysisResult.chordDetails || [],
+                                    rhythm: {
+                                      name: sp.name,
+                                      pattern: sp.pattern
+                                    }
+                                  }
+                                });
+                              }}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <ListMusic size={12} /> Secuenciador
                             </button>
                           </div>
                           <StrummingVisualizer 

@@ -7,6 +7,7 @@ import Transitions from './pages/Transitions';
 import Technique from './pages/Technique';
 import Repertoire from './pages/Repertoire';
 import Creations from './pages/Creations';
+import Sequencer from './pages/Sequencer';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/creaciones" element={<Creations />} />
           <Route path="/tecnica" element={<Technique />} />
           <Route path="/repertorio" element={<Repertoire />} />
+          <Route path="/secuenciador" element={<Sequencer />} />
         </Routes>
         <BottomNav />
       </div>
