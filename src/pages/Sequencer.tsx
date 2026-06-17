@@ -81,6 +81,8 @@ const Sequencer: React.FC = () => {
   const [activeBlockIndex, setActiveBlockIndex] = useState(-1);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [activeRhythmStep, setActiveRhythmStep] = useState(0);
+  
+  const [showPickerModal, setShowPickerModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'CHORDS' | 'RHYTHMS'>('CHORDS');
   
   const [showRhythmModal, setShowRhythmModal] = useState(false);
@@ -143,26 +145,27 @@ const Sequencer: React.FC = () => {
   }, [initialState]);
 
   const addChordBlock = (chord: any) => {
-    // ALWAYS add a new block when clicking a chord
-    const newBlock = { id: crypto.randomUUID(), chord, rhythm: initialRhythms[0] };
-    setBlocks([...blocks, newBlock]);
-    // Optionally select the newly added block so a subsequent rhythm click applies to it
-    setSelectedBlockId(newBlock.id);
-    
-    // Automatically switch to Rhythms tab to encourage setting a rhythm
+    if (selectedBlockId) {
+      // Update existing
+      setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, chord } : b));
+    } else {
+      // Add new
+      const newBlock = { id: crypto.randomUUID(), chord, rhythm: initialRhythms[0] };
+      setBlocks([...blocks, newBlock]);
+      setSelectedBlockId(newBlock.id);
+    }
     setActiveTab('RHYTHMS');
   };
 
   const addRhythmBlock = (rhythm: any) => {
     if (selectedBlockId) {
-      // Update existing block
       setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, rhythm } : b));
     } else if (blocks.length > 0) {
-      // Update last block
       const lastId = blocks[blocks.length - 1].id;
       setBlocks(blocks.map(b => b.id === lastId ? { ...b, rhythm } : b));
       setSelectedBlockId(lastId);
     }
+    setShowPickerModal(false);
   };
 
   const removeBlock = (id: string) => {
@@ -171,11 +174,22 @@ const Sequencer: React.FC = () => {
 
   const handleSaveRhythm = () => {
     if (!newRhythmName.trim()) return;
-    addCustomRhythm({
+    
+    const newRhythm = {
       name: newRhythmName,
       pattern: newRhythmPattern,
-    });
+    };
+    
+    addCustomRhythm(newRhythm);
+    
+    // Auto-aplicar al bloque seleccionado si estamos editando
+    if (selectedBlockId) {
+      setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, rhythm: newRhythm } : b));
+    }
+    
     setShowRhythmModal(false);
+    setShowPickerModal(true);
+    setActiveTab('RHYTHMS');
     setNewRhythmName('');
     setNewRhythmPattern(Array(8).fill('-'));
   };
@@ -279,52 +293,55 @@ const Sequencer: React.FC = () => {
   const activeChord = blocks[activeBlockIndex]?.chord || (selectedBlockId ? blocks.find(b => b.id === selectedBlockId)?.chord : blocks[0]?.chord) || CORE_CHORDS[0];
 
   return (
-    <div className="page-container" style={{ paddingBottom: '120px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-container" style={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
       
       {/* Header Premium */}
-      <header className="page-header" style={{ marginBottom: '20px', padding: '20px 20px 0 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
-            <Music size={24} color="white" />
+      <header className="page-header" style={{ marginBottom: '30px', padding: '30px 30px 0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+            <Music size={24} color="#a78bfa" />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, color: 'white', letterSpacing: '-0.5px' }}>
               Song Builder
             </h1>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Secuenciador Multipista</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 600 }}>Secuenciador Multipista</p>
           </div>
         </div>
       </header>
 
       {/* Visualizador Principal Gigante */}
-      <div style={{ padding: '0 20px', marginBottom: '24px' }}>
+      <div style={{ padding: '0 30px', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
         <div style={{ 
-          background: 'radial-gradient(circle at top, #1e293b, #0f172a)', 
-          borderRadius: '24px', 
-          padding: '30px 20px',
+          width: '100%',
+          maxWidth: '800px',
+          background: 'rgba(15, 23, 42, 0.6)', 
+          backdropFilter: 'blur(20px)',
+          borderRadius: '32px', 
+          padding: '40px 20px',
           border: '1px solid rgba(255,255,255,0.05)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+          boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center',
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Fondo neón abstracto */}
+          {/* Fondo neón sutil */}
           {isPlaying && (
             <motion.div 
-              animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translate(-50%, -50%)', width: '200px', height: '200px', background: '#3b82f6', filter: 'blur(100px)', borderRadius: '50%', zIndex: 0 }}
+              animate={{ opacity: [0.15, 0.25, 0.15], scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '300px', height: '300px', background: '#8b5cf6', filter: 'blur(120px)', borderRadius: '50%', zIndex: 0 }}
             />
           )}
 
-          <div style={{ zIndex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ zIndex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             <motion.h2 
               key={activeChord?.name}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              style={{ fontSize: '3rem', margin: '0 0 20px 0', color: '#10b981', textShadow: '0 0 20px rgba(16, 185, 129, 0.4)', fontWeight: 900, letterSpacing: '-1px' }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ fontSize: '3.5rem', margin: '0 0 30px 0', color: 'white', textShadow: '0 0 30px rgba(255,255,255,0.2)', fontWeight: 800, letterSpacing: '-2px' }}
             >
               {activeChord?.name || '---'}
             </motion.h2>
@@ -417,64 +434,73 @@ const Sequencer: React.FC = () => {
       </div>
 
       {/* Transport Controls & Timeline */}
-      <div style={{ padding: '0 20px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', padding: '0 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ padding: '0 30px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
+        {/* Sleek Transport Bar */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          background: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: '100px',
+          padding: '12px 24px',
+          boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               onClick={() => setIsPlaying(!isPlaying)}
               disabled={blocks.length === 0}
               style={{ 
-                width: '50px', height: '50px', 
+                width: '48px', height: '48px', 
                 borderRadius: '50%', 
                 border: 'none',
-                background: isPlaying ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #10b981, #059669)',
+                background: isPlaying ? 'rgba(255,255,255,0.1)' : '#8b5cf6',
                 color: 'white',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: blocks.length === 0 ? 'not-allowed' : 'pointer',
-                boxShadow: isPlaying ? '0 0 20px rgba(245, 158, 11, 0.4)' : '0 10px 15px -3px rgba(16, 185, 129, 0.3)',
-                opacity: blocks.length === 0 ? 0.5 : 1
+                boxShadow: isPlaying ? 'none' : '0 0 20px rgba(139, 92, 246, 0.4)',
+                opacity: blocks.length === 0 ? 0.5 : 1,
+                transition: 'all 0.2s'
               }}
               title={isPlaying ? "Pausar" : "Reproducir"}
             >
-              {isPlaying ? <Pause fill="currentColor" size={24} /> : <Play fill="currentColor" size={24} style={{ marginLeft: '4px' }} />}
+              {isPlaying ? <Pause fill="currentColor" size={20} /> : <Play fill="currentColor" size={20} style={{ marginLeft: '4px' }} />}
             </button>
             <button 
               onClick={handleStop}
               disabled={blocks.length === 0}
               style={{ 
-                width: '40px', height: '40px', 
+                width: '36px', height: '36px', 
                 borderRadius: '50%', 
                 border: 'none',
-                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
-                color: 'white',
+                background: 'transparent',
+                color: '#94a3b8',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: blocks.length === 0 ? 'not-allowed' : 'pointer',
-                boxShadow: '0 5px 15px -3px rgba(239, 68, 68, 0.3)',
-                opacity: blocks.length === 0 ? 0.5 : 1
+                opacity: blocks.length === 0 ? 0.5 : 1,
+                transition: 'color 0.2s'
               }}
+              onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
+              onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
               title="Detener (Reset)"
             >
-              <Square fill="currentColor" size={16} />
+              <Square fill="currentColor" size={14} />
             </button>
-            <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '12px' }}>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Tempo</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input 
-                  type="number" 
-                  value={bpm} 
-                  onChange={(e) => setBpm(Math.max(40, Math.min(200, Number(e.target.value))))}
-                  style={{ width: '48px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', fontWeight: 800, fontSize: '1rem', padding: '4px 8px', textAlign: 'center' }}
-                />
-                <input 
-                  type="range" 
-                  min="40" 
-                  max="200" 
-                  value={bpm} 
-                  onChange={(e) => setBpm(Number(e.target.value))}
-                  style={{ width: '80px', accentColor: '#3b82f6' }}
-                />
-              </div>
-            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', letterSpacing: '1px' }}>TEMPO</span>
+            <input 
+              type="range" 
+              min="40" 
+              max="200" 
+              value={bpm} 
+              onChange={(e) => setBpm(Number(e.target.value))}
+              style={{ width: '100px', accentColor: '#8b5cf6' }}
+            />
+            <span style={{ fontSize: '1rem', color: 'white', fontWeight: 800, width: '60px', textAlign: 'right' }}>{bpm} <span style={{fontSize: '0.65rem', color: '#64748b'}}>BPM</span></span>
           </div>
         </div>
 
@@ -482,22 +508,23 @@ const Sequencer: React.FC = () => {
         <div 
           ref={timelineRef}
           style={{ 
-            background: 'rgba(15, 23, 42, 0.8)',
-            border: '1px solid rgba(255,255,255,0.05)',
-          borderRadius: '16px',
-          padding: '16px',
-          minHeight: '150px',
-          display: 'flex',
-          gap: '16px',
-          overflowX: 'auto',
-          alignItems: 'center',
-          position: 'relative',
-          paddingBottom: '24px' // Extra space for selection styling
+            display: 'flex',
+            gap: '16px',
+            overflowX: 'auto',
+            alignItems: 'center',
+            padding: '15px 15px 30px 15px',
+            position: 'relative'
         }}>
           {blocks.length === 0 ? (
-            <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b' }}>
-              <Zap size={32} style={{ margin: '0 auto 8px auto', opacity: 0.5 }} />
-              <p style={{ margin: 0, fontSize: '0.9rem' }}>La pista está vacía.<br/>Selecciona un acorde abajo para añadir un bloque.</p>
+            <div style={{ margin: '40px auto', textAlign: 'center', color: '#64748b' }}>
+              <Zap size={32} style={{ margin: '0 auto 12px auto', opacity: 0.3 }} />
+              <p style={{ margin: 0, fontSize: '0.9rem', letterSpacing: '0.5px' }}>La pista está vacía.</p>
+              <button 
+                onClick={() => { setSelectedBlockId(null); setShowPickerModal(true); setActiveTab('CHORDS'); }}
+                style={{ marginTop: '20px', padding: '12px 24px', background: '#8b5cf6', color: 'white', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                + Añadir Primer Acorde
+              </button>
             </div>
           ) : (
             <AnimatePresence>
@@ -514,74 +541,75 @@ const Sequencer: React.FC = () => {
                       playheadRef.current = { blockIdx: idx, stepIdx: 0 };
                       setIsPlaying(true);
                     }}
-                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: isSelected ? 1.05 : 1 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: isSelected ? 1.05 : 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     style={{
-                      minWidth: '180px',
-                      height: '110px',
-                      borderRadius: '16px',
+                      minWidth: '220px',
+                      height: '90px',
+                      borderRadius: '20px',
                       background: isPlayingActive 
-                        ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.4))' 
-                        : (isSelected ? 'linear-gradient(135deg, #1e293b, #334155)' : 'rgba(255,255,255,0.03)'),
-                      border: `2px solid ${isPlayingActive ? '#10b981' : (isSelected ? '#3b82f6' : 'rgba(255,255,255,0.1)')}`,
-                      boxShadow: isPlayingActive ? '0 0 20px rgba(16, 185, 129, 0.3)' : (isSelected ? '0 10px 25px rgba(0,0,0,0.5)' : 'none'),
+                        ? 'rgba(139, 92, 246, 0.15)' 
+                        : (isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)'),
+                      border: `1px solid ${isPlayingActive ? 'rgba(139, 92, 246, 0.5)' : (isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)')}`,
+                      boxShadow: isPlayingActive ? '0 0 30px rgba(139, 92, 246, 0.2)' : (isSelected ? '0 10px 20px rgba(0,0,0,0.3)' : 'none'),
+                      backdropFilter: 'blur(10px)',
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      justifyContent: 'space-between',
                       position: 'relative',
                       flexShrink: 0,
                       cursor: 'pointer',
-                      transition: 'border 0.2s, background 0.2s'
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      padding: '0 20px'
                     }}
                   >
-                    {/* Trash Button */}
+                    {/* Action Buttons Hover */}
                     {isSelected && !isPlaying && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}
-                        style={{ position: 'absolute', top: '-10px', right: '-10px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div style={{ position: 'absolute', top: '-12px', right: '-12px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                        <motion.button 
+                          initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                          onClick={(e) => { e.stopPropagation(); setShowPickerModal(true); setActiveTab('CHORDS'); }}
+                          style={{ background: '#0f172a', border: '1px solid #3b82f6', color: '#60a5fa', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}
+                          title="Editar Bloque"
+                        >
+                          <Settings size={16} />
+                        </motion.button>
+                        <motion.button 
+                          initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                          onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}
+                          style={{ background: '#0f172a', border: '1px solid #ef4444', color: '#f87171', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}
+                          title="Eliminar Bloque"
+                        >
+                          <Trash2 size={16} />
+                        </motion.button>
+                      </div>
                     )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
+                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>{block.chord.name}</span>
+                    </div>
                     
-                    {/* Selection Indicator */}
-                    {isSelected && !isPlaying && (
-                      <div style={{ position: 'absolute', bottom: '-18px', fontSize: '0.65rem', color: '#3b82f6', fontWeight: 'bold' }}>
-                        EDITANDO BLOQUE
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '0 16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                        <span style={{ fontSize: '1.6rem', fontWeight: 900, color: isPlayingActive ? '#10b981' : 'white' }}>{block.chord.name}</span>
-                      </div>
-                      
-                      <div style={{ width: '1px', height: '40px', background: 'rgba(255,255,255,0.1)' }} />
-
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 2 }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: isPlayingActive ? '#c4b5fd' : '#a78bfa', marginBottom: '8px', textAlign: 'center', width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{block.rhythm.name}</span>
-                        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                          {block.rhythm.pattern.map((p: string, i: number) => {
-                            const isStepActive = isPlayingActive && activeRhythmStep === i;
-                            return (
-                              <div key={i} style={{ 
-                                width: '16px', height: '22px', 
-                                background: isStepActive ? '#8b5cf6' : 'rgba(255,255,255,0.1)',
-                                borderRadius: '4px',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: isStepActive ? 'white' : '#64748b',
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold',
-                                boxShadow: isStepActive ? '0 0 10px rgba(139, 92, 246, 0.5)' : 'none',
-                                transition: 'all 0.1s'
-                              }}>
-                                {p === '-' ? '•' : p}
-                              </div>
-                            );
-                          })}
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: 1 }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: isPlayingActive ? '#c4b5fd' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>{block.rhythm.name}</span>
+                      <div style={{ display: 'flex', gap: '3px' }}>
+                        {block.rhythm.pattern.map((p: string, i: number) => {
+                          const isStepActive = isPlayingActive && activeRhythmStep === i;
+                          return (
+                            <div key={i} style={{ 
+                              width: '12px', height: '18px', 
+                              background: isStepActive ? '#8b5cf6' : 'rgba(255,255,255,0.05)',
+                              borderRadius: '3px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: isStepActive ? 'white' : 'transparent',
+                              fontSize: '0.6rem',
+                              fontWeight: 'bold',
+                              transition: 'all 0.1s'
+                            }}>
+                              {isStepActive && (p === '-' ? '•' : p)}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </motion.div>
@@ -589,147 +617,160 @@ const Sequencer: React.FC = () => {
               })}
             </AnimatePresence>
           )}
-        </div>
-      </div>
 
-      {/* Bottom Toolbox Drawer */}
-      <div style={{ 
-        position: 'fixed', 
-        bottom: '72px', // Height of bottom nav
-        left: 0, 
-        right: 0, 
-        margin: '0 auto',
-        maxWidth: '600px', // Match .app-container width
-        background: 'rgba(15, 23, 42, 0.95)', 
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-        borderLeft: '1px solid rgba(255,255,255,0.05)',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
-        padding: '16px 20px',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
-        boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
-        zIndex: 40
-      }}>
-        {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: 'rgba(0,0,0,0.3)', padding: '4px', borderRadius: '12px' }}>
-          <button 
-            onClick={() => setActiveTab('CHORDS')}
-            style={{ 
-              flex: 1, padding: '8px', borderRadius: '8px', border: 'none', 
-              background: activeTab === 'CHORDS' ? '#334155' : 'transparent',
-              color: activeTab === 'CHORDS' ? 'white' : '#64748b',
-              fontWeight: 'bold', fontSize: '0.9rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            Añadir Acordes
-          </button>
-          <button 
-            onClick={() => setActiveTab('RHYTHMS')}
-            style={{ 
-              flex: 1, padding: '8px', borderRadius: '8px', border: 'none', 
-              background: activeTab === 'RHYTHMS' ? '#334155' : 'transparent',
-              color: activeTab === 'RHYTHMS' ? 'white' : '#64748b',
-              fontWeight: 'bold', fontSize: '0.9rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            Añadir Ritmos
-          </button>
-        </div>
-
-        {/* Toolbox Content */}
-        <div style={{ overflowX: 'auto', overflowY: 'hidden', paddingBottom: '8px', WebkitOverflowScrolling: 'touch' }}>
-          {activeTab === 'CHORDS' ? (
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {allAvailableChords.map((chord, idx) => {
-                const match = chord.name.match(/\((.*?)\)/);
-                const symbol = match ? match[1] : chord.name;
-                const fullName = match ? chord.name.split(' (')[0] : '';
-                
-                return (
-                  <button 
-                    key={idx}
-                    onClick={() => addChordBlock(chord)}
-                    style={{ 
-                      minWidth: '80px',
-                      padding: '12px 8px', 
-                      background: 'linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.02))', 
-                      border: '1px solid rgba(255,255,255,0.1)', 
-                      borderRadius: '12px', 
-                      color: 'white', 
-                      cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                      transition: 'transform 0.1s, background 0.2s',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-                      flexShrink: 0
-                    }}
-                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#10b981' }}>{symbol}</span>
-                    {fullName && <span style={{ fontSize: '0.65rem', color: '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70px' }}>{fullName}</span>}
-                    <Plus size={14} color="rgba(255,255,255,0.5)" style={{ marginTop: '4px' }} />
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '10px' }}>
-              {initialRhythms.map((rhythm, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => addRhythmBlock(rhythm)}
-                  style={{ 
-                    padding: '12px 16px', 
-                    background: 'linear-gradient(to right, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05))', 
-                    border: '1px solid rgba(139, 92, 246, 0.4)', 
-                    borderRadius: '12px', 
-                    color: 'white', 
-                    cursor: 'pointer',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    transition: 'transform 0.1s',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
-                  }}
-                  onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-                  onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span style={{ fontWeight: 'bold', color: '#c4b5fd', marginBottom: '4px' }}>{rhythm.name}</span>
-                    <span style={{ fontSize: '0.8rem', color: '#8b5cf6', letterSpacing: '2px' }}>{rhythm.pattern.join(' ')}</span>
-                  </div>
-                  <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '6px', borderRadius: '50%' }}>
-                    <Plus size={16} color="#c4b5fd" />
-                  </div>
-                </button>
-              ))}
-
-              <button 
-                onClick={() => setShowRhythmModal(true)}
-                style={{ 
-                  padding: '12px 16px', 
-                  background: 'transparent', 
-                  border: '2px dashed rgba(139, 92, 246, 0.5)', 
-                  borderRadius: '12px', 
-                  color: '#c4b5fd', 
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
-                  transition: 'background 0.2s',
-                  marginTop: '8px'
-                }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
-                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <Plus size={18} /> Crear Ritmo Personalizado
-              </button>
-            </div>
+          {blocks.length > 0 && (
+            <button 
+              onClick={() => { setSelectedBlockId(null); setShowPickerModal(true); setActiveTab('CHORDS'); }}
+              style={{ 
+                minWidth: '60px', height: '90px', 
+                background: 'transparent', border: '2px dashed rgba(255,255,255,0.2)', 
+                borderRadius: '20px', color: '#94a3b8', fontWeight: 'bold', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'white'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}
+              title="Añadir Siguiente Bloque"
+            >
+              <Plus size={24} />
+            </button>
           )}
         </div>
       </div>
+
+      {/* Fullscreen Picker Modal */}
+      <AnimatePresence>
+        {showPickerModal && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
+            style={{ 
+              position: 'fixed', bottom: '72px', left: 0, right: 0, margin: '0 auto', maxWidth: '600px', 
+              background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(30px)', 
+              borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+              borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)',
+              padding: '24px', boxShadow: '0 -20px 50px rgba(0,0,0,0.8)', zIndex: 100,
+              maxHeight: '70vh', display: 'flex', flexDirection: 'column'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedBlockId ? 'Editar Bloque' : 'Añadir Bloque'}</h3>
+              <button onClick={() => setShowPickerModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+            </div>
+
+            {/* Tab Switcher - Pill Design */}
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.4)', borderRadius: '100px', padding: '6px', marginBottom: '20px', position: 'relative', flexShrink: 0 }}>
+              <div style={{ 
+                position: 'absolute', top: '6px', bottom: '6px', width: 'calc(50% - 6px)', background: '#334155', borderRadius: '100px',
+                transform: activeTab === 'CHORDS' ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)', zIndex: 0 
+              }} />
+              <button 
+                onClick={() => setActiveTab('CHORDS')}
+                style={{ flex: 1, padding: '10px', background: 'transparent', border: 'none', color: activeTab === 'CHORDS' ? 'white' : '#94a3b8', fontWeight: 'bold', fontSize: '0.85rem', zIndex: 1, cursor: 'pointer', transition: 'color 0.3s' }}
+              >
+                Acordes
+              </button>
+              <button 
+                onClick={() => setActiveTab('RHYTHMS')}
+                style={{ flex: 1, padding: '10px', background: 'transparent', border: 'none', color: activeTab === 'RHYTHMS' ? 'white' : '#94a3b8', fontWeight: 'bold', fontSize: '0.85rem', zIndex: 1, cursor: 'pointer', transition: 'color 0.3s' }}
+              >
+                Ritmos
+              </button>
+            </div>
+
+            {/* Toolbox Content */}
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
+              {activeTab === 'CHORDS' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '10px' }}>
+                  {allAvailableChords.map((chord, idx) => {
+                    const match = chord.name.match(/\((.*?)\)/);
+                    const symbol = match ? match[1] : chord.name;
+                    const fullName = match ? chord.name.split(' (')[0] : '';
+                    
+                    return (
+                      <button 
+                        key={idx}
+                        onClick={() => addChordBlock(chord)}
+                        style={{ 
+                          padding: '16px 8px', 
+                          background: 'linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.02))', 
+                          border: '1px solid rgba(255,255,255,0.1)', 
+                          borderRadius: '16px', 
+                          color: 'white', 
+                          cursor: 'pointer',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                          transition: 'transform 0.1s, background 0.2s',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
+                        }}
+                        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#10b981' }}>{symbol}</span>
+                        {fullName && <span style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{fullName}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  {initialRhythms.map((rhythm, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => addRhythmBlock(rhythm)}
+                      style={{ 
+                        padding: '16px', 
+                        background: 'linear-gradient(to right, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05))', 
+                        border: '1px solid rgba(139, 92, 246, 0.4)', 
+                        borderRadius: '16px', 
+                        color: 'white', 
+                        cursor: 'pointer',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        transition: 'transform 0.1s',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
+                      }}
+                      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+                      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: 'bold', color: '#c4b5fd', marginBottom: '6px', fontSize: '1.1rem' }}>{rhythm.name}</span>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          {rhythm.pattern.map((p, i) => (
+                            <span key={i} style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', color: '#8b5cf6' }}>{p === '-' ? '•' : p}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '8px', borderRadius: '50%' }}>
+                        <Plus size={18} color="#c4b5fd" />
+                      </div>
+                    </button>
+                  ))}
+
+                  <button 
+                    onClick={() => { setShowPickerModal(false); setShowRhythmModal(true); }}
+                    style={{ 
+                      padding: '16px', 
+                      background: 'transparent', 
+                      border: '2px dashed rgba(139, 92, 246, 0.5)', 
+                      borderRadius: '16px', 
+                      color: '#c4b5fd', 
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                      transition: 'background 0.2s',
+                      marginTop: '8px'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)'}
+                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <Plus size={18} /> Crear Ritmo Personalizado
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Rhythm Creation Modal */}
       <AnimatePresence>
@@ -776,7 +817,7 @@ const Sequencer: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
                   <button onClick={() => {
-                    if (newRhythmPattern.length > 4) setNewRhythmPattern(newRhythmPattern.slice(0, -1));
+                    if (newRhythmPattern.length > 1) setNewRhythmPattern(newRhythmPattern.slice(0, -1));
                   }} style={{ background: 'transparent', border: '1px solid #334155', color: '#94a3b8', borderRadius: '8px', padding: '4px 12px' }}>- Quitar Paso</button>
                   <button onClick={() => {
                     if (newRhythmPattern.length < 16) setNewRhythmPattern([...newRhythmPattern, '-']);
