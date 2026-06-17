@@ -39,14 +39,14 @@ const StrummingVisualizer: React.FC<StrummingVisualizerProps> = ({ steps, curren
   };
 
   const handleRemove = (idx: number) => {
-    if (!isEditable || !onChange) return;
+    if (!isEditable || !onChange || steps.length <= 1) return;
     const newSteps = steps.filter((_, i) => i !== idx);
     onChange(newSteps);
   };
 
   const handleAdd = () => {
-    if (!isEditable || !onChange) return;
-    onChange([...steps, '↓']);
+    if (!isEditable || !onChange || steps.length >= 16) return;
+    onChange([...steps, '-']);
   };
 
   return (

@@ -504,6 +504,86 @@ const Sequencer: React.FC = () => {
           </div>
         </div>
 
+        {/* Mini Progression View & Quick Add */}
+        {blocks.length > 0 && (
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            padding: '0 20px 20px 20px',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '6px',
+              overflowX: 'auto',
+              scrollbarWidth: 'none', // hide scrollbar for cleaner look
+              msOverflowStyle: 'none',
+              maxWidth: 'calc(100vw - 120px)', // allow scrolling if many items
+            }}>
+              {blocks.map((block, idx) => {
+                const isPlayingActive = isPlaying && activeBlockIndex === idx;
+                const isSelected = selectedBlockId === block.id && !isPlaying;
+                const isHighlighted = isPlayingActive || isSelected;
+
+                // Extract abbreviation like "Gm" from "Sol Menor (Gm)"
+                const match = block.chord.name.match(/\((.*?)\)/);
+                const symbol = match ? match[1] : block.chord.name;
+
+                return (
+                  <div 
+                    key={`mini-${block.id}-${idx}`}
+                    onClick={() => {
+                       setSelectedBlockId(block.id);
+                       setActiveBlockIndex(idx);
+                       playheadRef.current = { blockIdx: idx, stepIdx: 0 };
+                       setIsPlaying(true);
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      background: isHighlighted ? 'rgba(239, 68, 68, 0.15)' : 'rgba(15, 23, 42, 0.6)', 
+                      border: `1px solid ${isHighlighted ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
+                      color: isHighlighted ? '#fca5a5' : '#64748b',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap',
+                      boxShadow: isHighlighted ? '0 0 10px rgba(239, 68, 68, 0.2)' : 'none',
+                      flexShrink: 0
+                    }}
+                    title={`Bloque ${idx + 1}: ${block.chord.name}`}
+                  >
+                    {symbol}
+                  </div>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => { setSelectedBlockId(null); setShowPickerModal(true); setActiveTab('CHORDS'); }}
+              style={{
+                width: '32px', height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(139, 92, 246, 0.2)',
+                border: '1px solid #8b5cf6',
+                color: '#c4b5fd',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                boxShadow: '0 0 10px rgba(139, 92, 246, 0.2)',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.4)'; e.currentTarget.style.color = 'white'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'; e.currentTarget.style.color = '#c4b5fd'; }}
+              title="Añadir Nuevo Bloque"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Timeline Track */}
         <div 
           ref={timelineRef}
@@ -591,23 +671,23 @@ const Sequencer: React.FC = () => {
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: 1 }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: isPlayingActive ? '#c4b5fd' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>{block.rhythm.name}</span>
-                      <div style={{ display: 'flex', gap: '3px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isPlayingActive ? '#c4b5fd' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{block.rhythm.name}</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
                         {block.rhythm.pattern.map((p: string, i: number) => {
                           const isStepActive = isPlayingActive && activeRhythmStep === i;
                           return (
-                            <div key={i} style={{ 
-                              width: '12px', height: '18px', 
-                              background: isStepActive ? '#8b5cf6' : 'rgba(255,255,255,0.05)',
-                              borderRadius: '3px',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: isStepActive ? 'white' : 'transparent',
-                              fontSize: '0.6rem',
-                              fontWeight: 'bold',
-                              transition: 'all 0.1s'
-                            }}>
-                              {isStepActive && (p === '-' ? '•' : p)}
-                            </div>
+                              <div key={i} style={{ 
+                                width: '22px', height: '28px', 
+                                background: isStepActive ? '#8b5cf6' : 'rgba(255,255,255,0.05)',
+                                borderRadius: '4px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: isStepActive ? 'white' : 'rgba(255,255,255,0.4)',
+                                fontSize: '0.95rem',
+                                fontWeight: 'bold',
+                                transition: 'all 0.1s'
+                              }}>
+                                {p === '-' ? '•' : p}
+                              </div>
                           );
                         })}
                       </div>
