@@ -203,6 +203,21 @@ const Sequencer: React.FC = () => {
     setNewRhythmPattern(newPattern);
   };
 
+  // Keyboard Shortcuts (Space to play/pause)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent triggering if user is typing in an input (e.g., Rhythm Name)
+      if (document.activeElement?.tagName === 'INPUT') return;
+      
+      if (e.code === 'Space' && !showPickerModal && !showRhythmModal && blocks.length > 0) {
+        e.preventDefault(); // Prevent page scroll down
+        setIsPlaying(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [blocks.length, showPickerModal, showRhythmModal]);
+
   // Playback Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -562,7 +577,7 @@ const Sequencer: React.FC = () => {
             </div>
             
             <button
-              onClick={() => { setSelectedBlockId(null); setShowPickerModal(true); setActiveTab('CHORDS'); }}
+              onClick={() => { if(!isPlaying) { setSelectedBlockId(null); setShowPickerModal(true); setActiveTab('CHORDS'); } }}
               style={{
                 width: '32px', height: '32px',
                 borderRadius: '8px',
@@ -570,13 +585,14 @@ const Sequencer: React.FC = () => {
                 border: '1px solid #8b5cf6',
                 color: '#c4b5fd',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: isPlaying ? 'not-allowed' : 'pointer',
                 flexShrink: 0,
                 boxShadow: '0 0 10px rgba(139, 92, 246, 0.2)',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                opacity: isPlaying ? 0.4 : 1
               }}
-              onMouseOver={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.4)'; e.currentTarget.style.color = 'white'; }}
-              onMouseOut={e => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'; e.currentTarget.style.color = '#c4b5fd'; }}
+              onMouseOver={e => { if(!isPlaying) { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.4)'; e.currentTarget.style.color = 'white'; } }}
+              onMouseOut={e => { if(!isPlaying) { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)'; e.currentTarget.style.color = '#c4b5fd'; } }}
               title="Añadir Nuevo Bloque"
             >
               <Plus size={16} />
@@ -593,7 +609,10 @@ const Sequencer: React.FC = () => {
             overflowX: 'auto',
             alignItems: 'center',
             padding: '15px 15px 30px 15px',
-            position: 'relative'
+            position: 'relative',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollBehavior: 'smooth'
         }}>
           {blocks.length === 0 ? (
             <div style={{ margin: '40px auto', textAlign: 'center', color: '#64748b' }}>
@@ -721,17 +740,23 @@ const Sequencer: React.FC = () => {
       {/* Fullscreen Picker Modal */}
       <AnimatePresence>
         {showPickerModal && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
-            style={{ 
-              position: 'fixed', bottom: '72px', left: 0, right: 0, margin: '0 auto', maxWidth: '600px', 
-              background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(30px)', 
-              borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
-              borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)',
-              padding: '24px', boxShadow: '0 -20px 50px rgba(0,0,0,0.8)', zIndex: 100,
-              maxHeight: '70vh', display: 'flex', flexDirection: 'column'
-            }}
-          >
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowPickerModal(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 90 }}
+            />
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
+              style={{ 
+                position: 'fixed', bottom: '72px', left: 0, right: 0, margin: '0 auto', maxWidth: '600px', 
+                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(30px)', 
+                borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+                borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)',
+                padding: '24px', boxShadow: '0 -20px 50px rgba(0,0,0,0.8)', zIndex: 100,
+                maxHeight: '70vh', display: 'flex', flexDirection: 'column'
+              }}
+            >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedBlockId ? 'Editar Bloque' : 'Añadir Bloque'}</h3>
               <button onClick={() => setShowPickerModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
@@ -849,21 +874,28 @@ const Sequencer: React.FC = () => {
               )}
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
 
       {/* Rhythm Creation Modal */}
       <AnimatePresence>
         {showRhythmModal && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-          >
+          <>
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '24px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowRhythmModal(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 999 }}
+            />
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', pointerEvents: 'none' }}
             >
-              <h3 style={{ fontSize: '1.4rem', color: 'white', margin: '0 0 20px 0' }}>Crear Ritmo</h3>
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+                style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '24px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', pointerEvents: 'auto' }}
+              >
+                <h3 style={{ fontSize: '1.4rem', color: 'white', margin: '0 0 20px 0' }}>Crear Ritmo</h3>
               
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>Nombre del Ritmo</label>
@@ -924,6 +956,7 @@ const Sequencer: React.FC = () => {
               </div>
             </motion.div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
 
