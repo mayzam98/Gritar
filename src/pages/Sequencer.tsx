@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Square, Plus, Trash2, GripVertical, Settings, Music, Zap, MoveRight, Volume2 } from 'lucide-react';
+import { Play, Square, Pause, Plus, Trash2, GripVertical, Settings, Music, Zap, MoveRight, Volume2 } from 'lucide-react';
 import FretboardVisualizer from '../components/ui/FretboardVisualizer';
 import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import { useAppStore } from '../core/application/store';
@@ -181,7 +181,7 @@ const Sequencer: React.FC = () => {
   };
 
   const toggleRhythmStep = (idx: number) => {
-    const cycle = ['-', '↓', '↑', 'X', 'B'];
+    const cycle = ['↓', '↑', '↓X', '↑X', 'X', 'B', 'P', '-'];
     const current = newRhythmPattern[idx];
     const nextIdx = (cycle.indexOf(current) + 1) % cycle.length;
     const newPattern = [...newRhythmPattern];
@@ -230,14 +230,18 @@ const Sequencer: React.FC = () => {
         playheadRef.current = { blockIdx, stepIdx };
 
       }, beatDuration);
-    } else {
-      playheadRef.current = { blockIdx: -1, stepIdx: 0 };
-      setActiveBlockIndex(-1);
-      setActiveRhythmStep(0);
     }
-
+    // When not playing, we DO NOT reset the playhead. This creates a "Pause" behavior.
+    
     return () => clearInterval(interval);
   }, [isPlaying, bpm, blocks]);
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    playheadRef.current = { blockIdx: -1, stepIdx: 0 };
+    setActiveBlockIndex(-1);
+    setActiveRhythmStep(0);
+  };
 
   const playTick = (ctx: AudioContext, symbol: string) => {
     const isBass = symbol === 'B';
@@ -423,17 +427,36 @@ const Sequencer: React.FC = () => {
                 width: '50px', height: '50px', 
                 borderRadius: '50%', 
                 border: 'none',
-                background: isPlaying ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, #10b981, #059669)',
+                background: isPlaying ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: blocks.length === 0 ? 'not-allowed' : 'pointer',
-                boxShadow: isPlaying ? '0 0 20px rgba(239, 68, 68, 0.4)' : '0 10px 15px -3px rgba(16, 185, 129, 0.3)',
+                boxShadow: isPlaying ? '0 0 20px rgba(245, 158, 11, 0.4)' : '0 10px 15px -3px rgba(16, 185, 129, 0.3)',
                 opacity: blocks.length === 0 ? 0.5 : 1
               }}
+              title={isPlaying ? "Pausar" : "Reproducir"}
             >
-              {isPlaying ? <Square fill="currentColor" size={20} /> : <Play fill="currentColor" size={24} style={{ marginLeft: '4px' }} />}
+              {isPlaying ? <Pause fill="currentColor" size={24} /> : <Play fill="currentColor" size={24} style={{ marginLeft: '4px' }} />}
             </button>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <button 
+              onClick={handleStop}
+              disabled={blocks.length === 0}
+              style={{ 
+                width: '40px', height: '40px', 
+                borderRadius: '50%', 
+                border: 'none',
+                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                color: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: blocks.length === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: '0 5px 15px -3px rgba(239, 68, 68, 0.3)',
+                opacity: blocks.length === 0 ? 0.5 : 1
+              }}
+              title="Detener (Reset)"
+            >
+              <Square fill="currentColor" size={16} />
+            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '12px' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Tempo</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <input 
@@ -486,9 +509,10 @@ const Sequencer: React.FC = () => {
                   <motion.div 
                     key={block.id}
                     onClick={() => { 
-                      if (!isPlaying) {
-                        setSelectedBlockId(isSelected ? null : block.id);
-                      } 
+                      setSelectedBlockId(block.id);
+                      setActiveBlockIndex(idx);
+                      playheadRef.current = { blockIdx: idx, stepIdx: 0 };
+                      setIsPlaying(true);
                     }}
                     initial={{ opacity: 0, y: 20, scale: 0.8 }}
                     animate={{ opacity: 1, y: 0, scale: isSelected ? 1.05 : 1 }}
@@ -757,6 +781,19 @@ const Sequencer: React.FC = () => {
                   <button onClick={() => {
                     if (newRhythmPattern.length < 16) setNewRhythmPattern([...newRhythmPattern, '-']);
                   }} style={{ background: 'transparent', border: '1px solid #334155', color: '#94a3b8', borderRadius: '8px', padding: '4px 12px' }}>+ Añadir Paso</button>
+                </div>
+              </div>
+              <div style={{ width: '100%', marginBottom: '24px', padding: '12px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Leyenda de Símbolos</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#eab308', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>↓</span> Abajo</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#eab308', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>↑</span> Arriba</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#ef4444', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>↓X</span> Mute Abajo</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#ef4444', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>↑X</span> Mute Arriba</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#ef4444', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>X</span> Chaskido</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#10b981', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>B</span> Bajo</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#06b6d4', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>P</span> Pellizco</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#64748b', fontWeight: 'bold', width: '20px', textAlign: 'center' }}>-</span> Silencio</div>
                 </div>
               </div>
 

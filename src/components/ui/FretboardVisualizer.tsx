@@ -171,8 +171,14 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
     return nextPositions.map((pos, idx) => {
       if (pos.fret >= startFret && pos.fret < startFret + fretCount) {
         const relativeFret = pos.fret - startFret;
-        const x = marginLeft + (relativeFret + 0.5) * fretWidth;
+        let x = marginLeft + (relativeFret + 0.5) * fretWidth;
         const y = getStringY(pos.string);
+        
+        // Check for overlap to avoid hiding the ghost dot behind the active dot
+        const isOverlapping = positions.some(p => p.string === pos.string && p.fret === pos.fret);
+        if (isOverlapping) {
+          x += 8; // Shift to the right to display side-by-side
+        }
         
         return (
           <g key={`next-pos-${idx}`}>
@@ -215,8 +221,13 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
         
         const x1 = marginLeft + (relativeFromFret + 0.5) * fretWidth;
         const y1 = getStringY(line.fromString);
-        const x2 = marginLeft + (relativeToFret + 0.5) * fretWidth;
+        let x2 = marginLeft + (relativeToFret + 0.5) * fretWidth;
         const y2 = getStringY(line.toString);
+
+        const isOverlappingTarget = positions.some(p => p.string === line.toString && p.fret === line.toFret);
+        if (isOverlappingTarget) {
+          x2 += 8; // Match the ghost dot offset
+        }
 
         // Si la distancia es 0 (mismo lugar), no dibujamos línea
         if (x1 === x2 && y1 === y2) return null;
@@ -313,11 +324,11 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
             id="arrowhead" 
             markerWidth="4" 
             markerHeight="4" 
-            refX="4" 
+            refX="7" 
             refY="2" 
             orient="auto"
           >
-            <path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(234, 179, 8, 0.6)" />
+            <path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(59, 130, 246, 0.8)" />
           </marker>
         </defs>
         {renderStringIndicators()}
