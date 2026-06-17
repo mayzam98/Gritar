@@ -5,6 +5,7 @@ import { AiProviderType } from '../core/domain/AiProvider';
 import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
 import InteractiveFretboard from '../components/ui/InteractiveFretboard';
+import YouTubeSyncPlayer from '../components/ui/YouTubeSyncPlayer';
 import { useAppStore } from '../core/application/store';
 
 const Repertoire: React.FC = () => {
@@ -213,16 +214,13 @@ const Repertoire: React.FC = () => {
                 
                 {/* Embedded Video Player */}
                 {analysisResult.videoId && (
-                  <div style={{ marginBottom: '16px', borderRadius: '8px', overflow: 'hidden', position: 'relative', paddingBottom: '56.25%' }}>
-                    <iframe 
-                      key={`${analysisResult.currentSeekTime}-${analysisResult.playbackTrigger || 0}`}
-                      src={`https://www.youtube.com/embed/${analysisResult.videoId}?start=${Math.floor(Number(analysisResult.currentSeekTime))}&autoplay=1`} 
-                      title="YouTube video player" 
-                      frameBorder="0" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                    ></iframe>
+                  <div style={{ marginBottom: '24px' }}>
+                    <YouTubeSyncPlayer 
+                      videoId={analysisResult.videoId}
+                      chordTimestamps={analysisResult.chordTimestamps || []}
+                      chordDetails={analysisResult.chordDetails || []}
+                      startSeconds={analysisResult.currentSeekTime}
+                    />
                   </div>
                 )}
                 
@@ -230,17 +228,17 @@ const Repertoire: React.FC = () => {
                   <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Acordes Detectados:</strong>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                     {(() => {
-                      // Ya no ordenamos aquí, confiamos en el orden maestro y cronológico de la IA
-                      return (analysisResult.chords || []).map((c: string, idx: number) => {
-                        const chordTime = analysisResult.chordTimestamps?.find((ct: any) => ct.chord === c)?.timeSeconds;
+                      return (analysisResult.chordTimestamps || []).map((ct: any, idx: number) => {
+                        const c = ct.chord;
+                        const chordTime = ct.timeSeconds;
                         const hasTime = chordTime !== undefined && chordTime !== null;
                         const chordDetails = analysisResult.chordDetails?.find((d: any) => d.chord === c);
                         
                       return (
-                        <div key={`${c}-${idx}`} style={{ position: 'relative' }} onMouseEnter={() => setHoveredChordIdx(idx)} onMouseLeave={() => setHoveredChordIdx(null)}>
+                        <div key={`${c}-${chordTime}-${idx}`} style={{ position: 'relative' }} onMouseEnter={() => setHoveredChordIdx(idx)} onMouseLeave={() => setHoveredChordIdx(null)}>
                           <button 
                             onClick={() => hasTime ? handlePlayChord(chordTime) : null}
-                            title={hasTime ? `Ver acorde ${c} en el video` : 'Acorde detectado'}
+                            title={hasTime ? `Ver acorde ${c} en el minuto ${Math.floor(chordTime / 60)}:${Math.floor(chordTime % 60).toString().padStart(2, '0')}` : 'Acorde detectado'}
                             style={{ 
                               backgroundColor: '#1e293b', 
                               padding: '6px 12px', 
