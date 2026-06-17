@@ -320,7 +320,23 @@ const Repertoire: React.FC = () => {
                     {analysisResult.strummingPatterns && analysisResult.strummingPatterns.length > 0 ? (
                       analysisResult.strummingPatterns.map((sp: any, idx: number) => (
                         <div key={idx} style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
+                            {sp.timeSeconds !== undefined && sp.timeSeconds !== null && (
+                              <button 
+                                onClick={() => handlePlayChord(sp.timeSeconds)}
+                                title={`Ver ritmo en el minuto ${Math.floor(sp.timeSeconds / 60)}:${Math.floor(sp.timeSeconds % 60).toString().padStart(2, '0')}`}
+                                style={{ 
+                                  background: 'none', border: 'none', padding: 0, cursor: 'pointer', 
+                                  display: 'flex', alignItems: 'center', color: '#93c5fd', transition: 'color 0.2s' 
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.color = '#fff'}
+                                onMouseOut={(e) => e.currentTarget.style.color = '#93c5fd'}
+                              >
+                                <PlayCircle size={14} />
+                              </button>
+                            )}
+                          </div>
                           <StrummingVisualizer 
                             steps={sp.pattern} 
                             size="sm" 
