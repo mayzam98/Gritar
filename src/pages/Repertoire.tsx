@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot } from 'lucide-react';
+import { Music, PlayCircle, Heart, Video, Sparkles, Loader2, FileText, CheckCircle2, Key, Bot, Plus } from 'lucide-react';
 import { AiProviderType } from '../core/domain/AiProvider';
 import { AiFactory } from '../core/infrastructure/ai/AiFactory';
 import { AnalyzeYouTubeTutorialUseCase } from '../core/application/AnalyzeYouTubeTutorialUseCase';
@@ -10,7 +10,7 @@ import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import { useAppStore } from '../core/application/store';
 
 const Repertoire: React.FC = () => {
-  const { savedSongs, saveSong, deleteSong } = useAppStore();
+  const { savedSongs, saveSong, updateSong, deleteSong } = useAppStore();
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -60,10 +60,7 @@ const Repertoire: React.FC = () => {
         title: "Tutorial Descifrado",
         originalVideo: url,
         videoId: videoId,
-        chords: result.chords,
-        chordTimestamps: result.chordTimestamps,
-        strumming: result.strumming,
-        summary: result.summary,
+        ...result,
         currentSeekTime: 0
       });
     } catch (err: any) {
@@ -324,16 +321,45 @@ const Repertoire: React.FC = () => {
                       analysisResult.strummingPatterns.map((sp: any, idx: number) => (
                         <div key={idx} style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
-                          <StrummingVisualizer steps={sp.pattern} size="sm" />
+                          <StrummingVisualizer 
+                            steps={sp.pattern} 
+                            size="sm" 
+                            isEditable={true}
+                            onChange={(newSteps) => {
+                              const newResult = { ...analysisResult };
+                              newResult.strummingPatterns[idx].pattern = newSteps;
+                              setAnalysisResult(newResult);
+                            }}
+                          />
                         </div>
                       ))
                     ) : Array.isArray(analysisResult.strumming) ? (
-                      <StrummingVisualizer steps={analysisResult.strumming} size="sm" />
+                      <StrummingVisualizer 
+                        steps={analysisResult.strumming} 
+                        size="sm" 
+                        isEditable={true}
+                        onChange={(newSteps) => {
+                          setAnalysisResult({ ...analysisResult, strumming: newSteps });
+                        }}
+                      />
                     ) : analysisResult.strumming ? (
                       <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
                         {analysisResult.strumming}
                       </p>
                     ) : null}
+                    
+                    <button
+                      className="btn btn-secondary"
+                      style={{ alignSelf: 'flex-start', fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center' }}
+                      onClick={() => {
+                        const newResult = { ...analysisResult };
+                        if (!newResult.strummingPatterns) newResult.strummingPatterns = [];
+                        newResult.strummingPatterns.push({ name: `Ritmo Manual ${newResult.strummingPatterns.length + 1}`, pattern: ['↓'] });
+                        setAnalysisResult(newResult);
+                      }}
+                    >
+                      <Plus size={14} style={{ marginRight: '4px' }} /> Añadir Patrón de Rasgueo Manual
+                    </button>
                   </div>
                 </div>
 
@@ -396,6 +422,26 @@ const Repertoire: React.FC = () => {
                   </span>
                 ))}
               </div>
+
+              {song.strummingPatterns && song.strummingPatterns.length > 0 && (
+                <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {song.strummingPatterns.map((sp: any, idx: number) => (
+                    <div key={idx} style={{ padding: '8px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                      <span style={{ display: 'block', marginBottom: '4px', fontSize: '0.75rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
+                      <StrummingVisualizer 
+                        steps={sp.pattern} 
+                        size="sm" 
+                        isEditable={true}
+                        onChange={(newSteps) => {
+                          const newPatterns = [...song.strummingPatterns!];
+                          newPatterns[idx] = { ...newPatterns[idx], pattern: newSteps };
+                          updateSong(song.id, { strummingPatterns: newPatterns });
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>

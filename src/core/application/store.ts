@@ -39,6 +39,7 @@ export interface Composition {
 interface AppState {
   savedSongs: SavedSong[];
   saveSong: (song: Omit<SavedSong, 'id' | 'createdAt'>) => void;
+  updateSong: (id: string, updates: Partial<SavedSong>) => void;
   deleteSong: (id: string) => void;
 
   compositions: Composition[];
@@ -62,6 +63,9 @@ export const useAppStore = create<AppState>()(
       savedSongs: [],
       saveSong: (song) => set((state) => ({
         savedSongs: [...state.savedSongs, { ...song, id: uuidv4(), createdAt: Date.now() }]
+      })),
+      updateSong: (id, updates) => set((state) => ({
+        savedSongs: state.savedSongs.map((s) => s.id === id ? { ...s, ...updates } : s)
       })),
       deleteSong: (id) => set((state) => ({
         savedSongs: state.savedSongs.filter((s) => s.id !== id)
