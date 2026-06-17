@@ -318,15 +318,22 @@ const Repertoire: React.FC = () => {
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Patrón de Rasgueo:</strong>
-                  <div style={{ marginTop: '8px' }}>
-                    {Array.isArray(analysisResult.strumming) ? (
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Patrones de Rasgueo:</strong>
+                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {analysisResult.strummingPatterns && analysisResult.strummingPatterns.length > 0 ? (
+                      analysisResult.strummingPatterns.map((sp: any, idx: number) => (
+                        <div key={idx} style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ display: 'block', marginBottom: '8px', fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
+                          <StrummingVisualizer steps={sp.pattern} size="sm" />
+                        </div>
+                      ))
+                    ) : Array.isArray(analysisResult.strumming) ? (
                       <StrummingVisualizer steps={analysisResult.strumming} size="sm" />
-                    ) : (
+                    ) : analysisResult.strumming ? (
                       <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
                         {analysisResult.strumming}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
@@ -350,6 +357,7 @@ const Repertoire: React.FC = () => {
                       chordTimestamps: analysisResult.chordTimestamps,
                       chordDetails: analysisResult.chordDetails,
                       strumming: analysisResult.strumming,
+                      strummingPatterns: analysisResult.strummingPatterns,
                       summary: analysisResult.summary
                     });
                     alert("¡Tutorial guardado en tu repertorio!");

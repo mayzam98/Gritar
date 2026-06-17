@@ -6,7 +6,8 @@ export interface AiAnalysisResult {
     startFret: number; 
     positions: { string: number; fret: number; finger?: number }[] 
   }[];
-  strumming: string | string[];
+  strumming: string | string[]; // Legacy
+  strummingPatterns?: { name: string; pattern: string[] }[]; // New multi-pattern format
   summary: string[];
 }
 

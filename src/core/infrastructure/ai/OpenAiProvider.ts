@@ -23,7 +23,7 @@ export class OpenAiProvider implements AiProvider {
       3. Puedes REPETIR acordes en el arreglo "chords" si la canción vuelve a ellos (ej. ["Em", "C", "G", "D", "Em", "C"]). ¡Es una progresión real!
       4. En "chordTimestamps", DEBES crear la línea de tiempo COMPLETA de la canción. Registra CADA VEZ que haya un cambio de acorde en el video. Para ahorrar tokens, usa un formato de arreglo compacto [segundo, "Acorde"]. Ej: [[10, "F"], [14, "G"], [18, "F"]].
       5. En "chordDetails", deduce CÓMO EL PROFESOR TOCA EL ACORDE (traste inicial y posición de dedos). Mapea los dedos a trastes y cuerdas (string 1 es la más aguda, 6 la más grave. finger 1 es índice, 2 medio, 3 anular, 4 meñique).
-      6. En "strumming", extrae el patrón de rasgueo como un ARREGLO DE SÍMBOLOS EXACTOS: "↓" (abajo), "↑" (arriba), "X" (chasquido/muteo), "B" (bajo), "-" (silencio/pausa). Ej: ["↓", "↓", "↑", "↑", "↓", "↑"].
+      6. En "strummingPatterns", extrae TODOS los ritmos enseñados en el tutorial (ej. ritmo de verso, de estribillo, etc). Cada patrón debe ser un ARREGLO DE SÍMBOLOS EXACTOS: "↓" (abajo), "↑" (arriba), "X" (chasquido/muteo), "B" (bajo), "-" (silencio/pausa). Ej: [{"name": "Verso", "pattern": ["↓", "↓", "↑", "↑", "↓", "↑"]}, {"name": "Coro", "pattern": ["B", "↓", "X", "↑"]}].
       7. Tu resumen debe ser una clase magistral: explica la progresión, técnicas, capo, y dinámica.
       8. RESPONDE 100% EN ESPAÑOL.
       9. REGLA DE ORO: ¡Tú no tienes ojos, solo lees texto! Si el profesor no menciona un acorde explícitamente pero por la letra de la canción o tu conocimiento musical sabes perfectamente qué acorde va ahí (ej. si es 'Vámonos a Marte' y sabes que lleva un C), INFIÉRELO e inclúyelo. Complétalo con tu sabiduría musical.
@@ -45,7 +45,10 @@ export class OpenAiProvider implements AiProvider {
             ]
           }
         ],
-        "strumming": ["↓", "↓", "↑", "↑", "↓", "↑"],
+        "strummingPatterns": [
+          { "name": "Ritmo Principal", "pattern": ["↓", "↓", "↑", "↑", "↓", "↑"] }
+        ],
+        "strumming": "",
         "summary": ["Punto 1..."]
       }
       
@@ -96,7 +99,8 @@ export class OpenAiProvider implements AiProvider {
       chords: result.chords || [],
       chordTimestamps: mappedTimestamps,
       chordDetails: result.chordDetails || [],
-      strumming: result.strumming || 'No especificado',
+      strumming: result.strumming || '',
+      strummingPatterns: result.strummingPatterns || [],
       summary: result.summary || []
     };
   }

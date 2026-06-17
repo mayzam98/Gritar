@@ -9,7 +9,8 @@ export interface SavedSong {
   chords: string[];
   chordTimestamps: any[];
   chordDetails?: any[];
-  strumming: string;
+  strumming: string | string[];
+  strummingPatterns?: any[];
   summary: string[];
   createdAt: number;
 }
