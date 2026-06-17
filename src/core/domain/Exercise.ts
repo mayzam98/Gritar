@@ -3,6 +3,7 @@ export interface Position {
   fret: number;
   finger?: number; // 1 (index), 2 (middle), 3 (ring), 4 (pinky)
   color?: string; // Optional custom color
+  id?: string; // Persistent ID for animations across chords
 }
 
 export type HandCategory = 'LEFT_HAND' | 'RIGHT_HAND' | 'BOTH';

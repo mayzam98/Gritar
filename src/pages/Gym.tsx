@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Dumbbell, Star, Lock } from 'lucide-react';
 import FretboardVisualizer from '../components/ui/FretboardVisualizer';
 import type { Position } from '../core/domain/Exercise';
@@ -9,6 +9,84 @@ import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
 import { dspEngine } from '../core/infrastructure/audio/PolyphonicDSP';
 import { chordClassifier } from '../core/infrastructure/audio/ChordClassifier';
 import { Volume2, Mic, Activity, BrainCircuit, X, Trash2 } from 'lucide-react';
+
+const ChordCard = ({ chord, idx, startFret, isTraining, selectedTrainChord }: any) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  const rotateX = useTransform(y, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(x, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) / rect.width;
+    const mouseY = (e.clientY - rect.top) / rect.height;
+    x.set(mouseX - 0.5);
+    y.set(mouseY - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  // Efecto de neón y elevación en 3D
+  return (
+    <motion.div 
+      className="card" 
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      whileHover={{ scale: 1.02 }}
+      style={{ 
+        margin: 0, 
+        padding: '20px', 
+        opacity: chord.unlocked ? 1 : 0.5, 
+        perspective: '1200px',
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+        boxShadow: isTraining && selectedTrainChord === chord.id ? '0 0 20px rgba(234, 179, 8, 0.3)' : '0 8px 30px rgba(0,0,0,0.5)',
+        border: isTraining && selectedTrainChord === chord.id ? '1px solid #eab308' : '1px solid rgba(255,255,255,0.05)'
+      }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+    >
+      {/* Contenido Elevado en el eje Z */}
+      <div style={{ transform: 'translateZ(30px)', transformStyle: "preserve-3d" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h4 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            {chord.unlocked ? <Star size={20} color="#eab308" /> : <Lock size={20} color="var(--text-secondary)" />}
+            {chord.name}
+          </h4>
+          <span className="badge" style={{ backgroundColor: chord.unlocked ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)', color: chord.unlocked ? '#60a5fa' : 'var(--text-secondary)', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
+            {chord.level}
+          </span>
+        </div>
+        
+        <div style={{ pointerEvents: 'none', filter: chord.unlocked ? 'none' : 'grayscale(100%)', transform: 'translateZ(20px)', backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px' }}>
+          <FretboardVisualizer 
+            positions={chord.positions as Position[]} 
+            startFret={startFret} 
+            fretCount={5} 
+            mutedStrings={chord.mutedStrings}
+            openStrings={chord.openStrings}
+            bassString={chord.bassString}
+          />
+        </div>
+
+        {chord.unlocked && (
+          <button 
+            onClick={() => audioEngine.playChord(chord.positions as Position[])}
+            className="btn btn-secondary" 
+            style={{ marginTop: '20px', width: '100%', padding: '10px', fontSize: '1rem', gap: '8px', transform: 'translateZ(40px)', backgroundColor: 'rgba(30, 41, 59, 0.9)', border: '1px solid rgba(96, 165, 250, 0.5)', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
+          >
+            <Volume2 size={18} color="#60a5fa" />
+            Sintetizar Acorde
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 const Gym: React.FC = () => {
   const chords = CORE_CHORDS;
@@ -434,45 +512,14 @@ const Gym: React.FC = () => {
             const minFret = Math.min(...chord.positions.map(p => p.fret));
             const startFret = minFret > 3 ? minFret - 1 : 1;
             return (
-              <motion.div 
-                key={idx} 
-                className="card" 
-                whileHover={{ scale: 1.02, rotateY: 2, rotateX: 2 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                style={{ margin: 0, padding: '16px', opacity: chord.unlocked ? 1 : 0.5, perspective: '1000px' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {chord.unlocked ? <Star size={18} color="#eab308" /> : <Lock size={18} color="var(--text-secondary)" />}
-                    {chord.name}
-                  </h4>
-                  <span className="badge" style={{ backgroundColor: chord.unlocked ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)', color: chord.unlocked ? '#60a5fa' : 'var(--text-secondary)' }}>
-                    {chord.level}
-                  </span>
-                </div>
-                
-                <div style={{ pointerEvents: 'none', filter: chord.unlocked ? 'none' : 'grayscale(100%)' }}>
-                  <FretboardVisualizer 
-                    positions={chord.positions as Position[]} 
-                    startFret={startFret} 
-                    fretCount={5} 
-                    mutedStrings={chord.mutedStrings}
-                    openStrings={chord.openStrings}
-                    bassString={chord.bassString}
-                  />
-                </div>
-
-                {chord.unlocked && (
-                  <button 
-                    onClick={() => audioEngine.playChord(chord.positions as Position[])}
-                    className="btn btn-secondary" 
-                    style={{ marginTop: '16px', width: '100%', padding: '8px', fontSize: '0.9rem', gap: '8px' }}
-                  >
-                    <Volume2 size={16} color="#60a5fa" />
-                    Escuchar Acorde
-                  </button>
-                )}
-              </motion.div>
+              <ChordCard 
+                key={chord.id} 
+                chord={chord} 
+                idx={idx} 
+                startFret={startFret} 
+                isTraining={isTraining} 
+                selectedTrainChord={selectedTrainChord} 
+              />
             );
           })}
         </div>

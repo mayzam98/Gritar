@@ -1,93 +1,15 @@
 import type { Position } from './Exercise';
 
-export interface KnownChord {
-  name: string;
-  positions: Position[];
-}
-
-const KNOWN_CHORDS: KnownChord[] = [
-  {
-    name: 'Do Mayor (C)',
-    positions: [
-      { string: 5, fret: 3 },
-      { string: 4, fret: 2 },
-      { string: 2, fret: 1 }
-    ]
-  },
-  {
-    name: 'Re Mayor (D)',
-    positions: [
-      { string: 3, fret: 2 },
-      { string: 2, fret: 3 },
-      { string: 1, fret: 2 }
-    ]
-  },
-  {
-    name: 'Mi Mayor (E)',
-    positions: [
-      { string: 5, fret: 2 },
-      { string: 4, fret: 2 },
-      { string: 3, fret: 1 }
-    ]
-  },
-  {
-    name: 'Sol Mayor (G)',
-    positions: [
-      { string: 6, fret: 3 },
-      { string: 5, fret: 2 },
-      { string: 1, fret: 3 }
-    ]
-  },
-  {
-    name: 'La Mayor (A)',
-    positions: [
-      { string: 4, fret: 2 },
-      { string: 3, fret: 2 },
-      { string: 2, fret: 2 }
-    ]
-  },
-  {
-    name: 'La Menor (Am)',
-    positions: [
-      { string: 4, fret: 2 },
-      { string: 3, fret: 2 },
-      { string: 2, fret: 1 }
-    ]
-  },
-  {
-    name: 'Mi Menor (Em)',
-    positions: [
-      { string: 5, fret: 2 },
-      { string: 4, fret: 2 }
-    ]
-  },
-  {
-    name: 'Re Menor (Dm)',
-    positions: [
-      { string: 3, fret: 2 },
-      { string: 2, fret: 3 },
-      { string: 1, fret: 1 }
-    ]
-  },
-  {
-    name: 'Fa Mayor (F)',
-    positions: [
-      { string: 4, fret: 3 },
-      { string: 3, fret: 2 },
-      { string: 2, fret: 1 },
-      { string: 1, fret: 1 }
-    ]
-  }
-];
+import { CORE_CHORDS } from './ChordDictionary';
 
 export function analyzeChord(userPositions: Position[]): { closestChord: string, matchPercentage: number, message: string, tags: string[] } | null {
   if (userPositions.length === 0) return null;
 
-  let bestMatch: KnownChord | null = null;
+  let bestMatch: any = null;
   let lowestDistance = Infinity;
   let highestMatchCount = -1;
 
-  for (const chord of KNOWN_CHORDS) {
+  for (const chord of CORE_CHORDS) {
     let distance = 0;
     let matchCount = 0;
 

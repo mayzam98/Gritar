@@ -22,63 +22,86 @@ export function analyzeTransition(chordA: Position[], chordB: Position[]): Trans
   const commonFingers: number[] = [];
   let totalDistance = 0;
 
-  // Find fingers in both chords
-  const fingersA = new Map(chordA.filter(p => p.finger).map(p => [p.finger!, p]));
-  const fingersB = new Map(chordB.filter(p => p.finger).map(p => [p.finger!, p]));
+  // Group fingers by finger number
+  const getFingers = (chord: Position[]) => {
+    const map = new Map<number, Position[]>();
+    chord.forEach(p => {
+      if (p.finger) {
+        if (!map.has(p.finger)) map.set(p.finger, []);
+        map.get(p.finger)!.push(p);
+      }
+    });
+    return map;
+  };
 
-  // 1. Identify Anchor fingers (common fingers that don't move)
-  for (const [finger, posA] of fingersA) {
-    if (fingersB.has(finger)) {
-      const posB = fingersB.get(finger)!;
-      if (posA.string === posB.string && posA.fret === posB.fret) {
+  const fingersA = getFingers(chordA);
+  const fingersB = getFingers(chordB);
+  
+  const allFingerNumbers = new Set([...fingersA.keys(), ...fingersB.keys()]);
+
+  for (const finger of allFingerNumbers) {
+    let listA = fingersA.get(finger) || [];
+    let listB = fingersB.get(finger) || [];
+    
+    // Greedy matching for fingers with the same number (essential for barre chords)
+    while (listA.length > 0 && listB.length > 0) {
+      let bestPair = { a: 0, b: 0, dist: Infinity };
+      
+      for (let i = 0; i < listA.length; i++) {
+        for (let j = 0; j < listB.length; j++) {
+          const dist = Math.abs(listA[i].string - listB[j].string) + Math.abs(listA[i].fret - listB[j].fret);
+          if (dist < bestPair.dist) {
+            bestPair = { a: i, b: j, dist };
+          }
+        }
+      }
+      
+      const posA = listA[bestPair.a];
+      const posB = listB[bestPair.b];
+      
+      if (bestPair.dist === 0) {
         commonFingers.push(finger);
         steps.push({
           finger,
-          fromString: posA.string,
-          fromFret: posA.fret,
-          toString: posB.string,
-          toFret: posB.fret,
+          fromString: posA.string, fromFret: posA.fret,
+          toString: posB.string, toFret: posB.fret,
           distance: 0,
-          instruction: `Mantén el dedo ${finger} fijo como pivote (ancla).`
+          instruction: `Mantén el dedo ${finger} fijo en la cuerda ${posA.string}/traste ${posA.fret} (ancla).`
         });
       } else {
-        // Finger moves
-        const distance = Math.abs(posA.string - posB.string) + Math.abs(posA.fret - posB.fret);
-        totalDistance += distance;
+        totalDistance += bestPair.dist;
         steps.push({
           finger,
-          fromString: posA.string,
-          fromFret: posA.fret,
-          toString: posB.string,
-          toFret: posB.fret,
-          distance,
+          fromString: posA.string, fromFret: posA.fret,
+          toString: posB.string, toFret: posB.fret,
+          distance: bestPair.dist,
           instruction: `Mueve el dedo ${finger} de la cuerda ${posA.string}/traste ${posA.fret} a la cuerda ${posB.string}/traste ${posB.fret}.`
         });
       }
-    } else {
-      // Finger is lifted
+      
+      // Remove the matched items
+      listA = listA.filter((_, idx) => idx !== bestPair.a);
+      listB = listB.filter((_, idx) => idx !== bestPair.b);
+    }
+    
+    // Any remaining in A are lifted
+    for (const posA of listA) {
       steps.push({
         finger,
-        fromString: posA.string,
-        fromFret: posA.fret,
-        toString: 0,
-        toFret: 0,
+        fromString: posA.string, fromFret: posA.fret,
+        toString: 0, toFret: 0,
         distance: 1,
-        instruction: `Levanta el dedo ${finger}.`
+        instruction: `Levanta el dedo ${finger} de la cuerda ${posA.string}.`
       });
       totalDistance += 1;
     }
-  }
-
-  // Identify new fingers placed
-  for (const [finger, posB] of fingersB) {
-    if (!fingersA.has(finger)) {
+    
+    // Any remaining in B are newly placed
+    for (const posB of listB) {
       steps.push({
         finger,
-        fromString: 0,
-        fromFret: 0,
-        toString: posB.string,
-        toFret: posB.fret,
+        fromString: 0, fromFret: 0,
+        toString: posB.string, toFret: posB.fret,
         distance: 1,
         instruction: `Coloca el dedo ${finger} en la cuerda ${posB.string}/traste ${posB.fret}.`
       });

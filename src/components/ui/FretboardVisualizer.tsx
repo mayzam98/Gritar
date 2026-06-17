@@ -1,5 +1,14 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import type { Position } from '../../core/domain/Exercise';
+
+export interface TransitionLine {
+  fromString: number;
+  fromFret: number;
+  toString: number;
+  toFret: number;
+  color?: string;
+}
 
 interface FretboardVisualizerProps {
   positions: Position[];
@@ -8,6 +17,8 @@ interface FretboardVisualizerProps {
   mutedStrings?: number[];
   openStrings?: number[];
   bassString?: number;
+  isAnimating?: boolean; // Used to trigger slower/smoother transitions if needed
+  transitionLines?: TransitionLine[];
 }
 
 const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({ 
@@ -16,7 +27,9 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
   fretCount = 5,
   mutedStrings = [],
   openStrings = [],
-  bassString
+  bassString,
+  isAnimating = true,
+  transitionLines = []
 }) => {
   const height = 60;
   const marginTop = 10;
@@ -106,19 +119,34 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
   };
 
   const renderPositions = () => {
+    const fingerCounts: Record<string, number> = {};
+
     return positions.map((pos, idx) => {
       if (pos.fret >= startFret && pos.fret < startFret + fretCount) {
         const relativeFret = pos.fret - startFret;
         const x = marginLeft + (relativeFret + 0.5) * fretWidth;
         const y = getStringY(pos.string);
+        
+        let uniqueKey = pos.id || `pos-${idx}`;
+        if (!pos.id && pos.finger) {
+          fingerCounts[pos.finger] = (fingerCounts[pos.finger] || 0) + 1;
+          uniqueKey = `finger-${pos.finger}-${fingerCounts[pos.finger]}`;
+        }
 
         return (
-          <g key={`pos-${idx}`}>
-            <circle cx={x} cy={y} r={3} fill={pos.color || "#3b82f6"} />
+          <g key={uniqueKey}>
+            <motion.circle 
+              initial={{ cx: x, cy: y, r: 0 }}
+              animate={{ cx: x, cy: y, r: 3 }}
+              exit={{ r: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              fill={pos.color || "#3b82f6"} 
+            />
             {pos.finger && (
-              <text 
-                x={x} 
-                y={y} 
+              <motion.text 
+                initial={{ x, y, opacity: 0 }}
+                animate={{ x, y, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 fill="white" 
                 fontSize="3.5" 
                 fontWeight="bold"
@@ -126,9 +154,53 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
                 dominantBaseline="central"
               >
                 {pos.finger}
-              </text>
+              </motion.text>
             )}
           </g>
+        );
+      }
+      return null;
+    });
+  };
+
+  const renderTransitionLines = () => {
+    if (!transitionLines || transitionLines.length === 0) return null;
+
+    return transitionLines.map((line, idx) => {
+      // Solo renderizar si ambas posiciones están dentro del rango visible
+      if (line.fromFret >= startFret && line.fromFret < startFret + fretCount &&
+          line.toFret >= startFret && line.toFret < startFret + fretCount) {
+        
+        const relativeFromFret = line.fromFret - startFret;
+        const relativeToFret = line.toFret - startFret;
+        
+        const x1 = marginLeft + (relativeFromFret + 0.5) * fretWidth;
+        const y1 = getStringY(line.fromString);
+        const x2 = marginLeft + (relativeToFret + 0.5) * fretWidth;
+        const y2 = getStringY(line.toString);
+
+        // Si la distancia es 0 (mismo lugar), no dibujamos línea
+        if (x1 === x2 && y1 === y2) return null;
+
+        // Calculamos un arco suave para la línea usando un path de Bézier
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const cx = x1 + dx / 2;
+        const cy = y1 + dy / 2 - 10; // Curvar la línea hacia arriba
+
+        return (
+          <motion.path
+            key={`transition-${idx}`}
+            d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
+            fill="transparent"
+            stroke={line.color || "rgba(234, 179, 8, 0.6)"} // Amarillo tenue por defecto
+            strokeWidth="1"
+            strokeDasharray="2,2"
+            markerEnd="url(#arrowhead)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          />
         );
       }
       return null;
@@ -197,10 +269,23 @@ const FretboardVisualizer: React.FC<FretboardVisualizerProps> = ({
         preserveAspectRatio="xMidYMid meet"
         style={{ width: '100%', height: 'auto', display: 'block' }}
       >
+        <defs>
+          <marker 
+            id="arrowhead" 
+            markerWidth="4" 
+            markerHeight="4" 
+            refX="4" 
+            refY="2" 
+            orient="auto"
+          >
+            <path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(234, 179, 8, 0.6)" />
+          </marker>
+        </defs>
         {renderStringIndicators()}
         {renderFrets()}
         {renderStrings()}
         {renderMarkers()}
+        {renderTransitionLines()}
         {renderPositions()}
       </svg>
     </div>
