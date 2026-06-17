@@ -375,19 +375,46 @@ const Gym: React.FC = () => {
                           padding: '8px',
                           borderTop: '1px solid rgba(96, 165, 250, 0.2)'
                         }}>
-                          {chordClassifier.getTrainedChordCount() === 0 ? (
-                            ['C', 'E', 'G'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Do Mayor (C) (Adivinanza Básica)" :
-                            ['G', 'B', 'D'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Sol Mayor (G) (Adivinanza Básica)" :
-                            ['A', 'C', 'E'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: La Menor (Am) (Adivinanza Básica)" :
-                            ['D', 'F#', 'A'].every(n => detectedNotes.some(d => d.note.includes(n))) ? "🎯 ACORDE DETECTADO: Re Mayor (D) (Adivinanza Básica)" :
-                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', textShadow: 'none', fontWeight: 'normal' }}>
-                              El modelo IA de alta precisión está vacío. Haz clic en "Entrenar Modelo" para guardar huellas.
-                            </span>
-                          ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '0.9rem', textShadow: 'none', fontWeight: 'normal' }}>
-                              Escuchando... IA analizando (Confianza &lt; 10%, {chordClassifier.getModelSize()} huellas en memoria)
-                            </span>
-                          )}
+                          {(() => {
+                            const detectedClasses = Array.from(new Set(detectedNotes.map(d => d.note.replace(/\d+$/, ''))));
+                            const BASIC_GUESS_CHORDS = [
+                              { name: 'Do Mayor Séptima (Cmaj7)', notes: ['C', 'E', 'G', 'B'] },
+                              { name: 'Do Séptima (C7)', notes: ['C', 'E', 'G', 'A#'] },
+                              { name: 'Re Séptima (D7)', notes: ['D', 'F#', 'A', 'C'] },
+                              { name: 'Mi Séptima (E7)', notes: ['E', 'G#', 'B', 'D'] },
+                              { name: 'Sol Séptima (G7)', notes: ['G', 'B', 'D', 'F'] },
+                              { name: 'La Séptima (A7)', notes: ['A', 'C#', 'E', 'G'] },
+                              { name: 'Si Séptima (B7)', notes: ['B', 'D#', 'F#', 'A'] },
+                              { name: 'Do Mayor (C)', notes: ['C', 'E', 'G'] },
+                              { name: 'Re Mayor (D)', notes: ['D', 'F#', 'A'] },
+                              { name: 'Mi Mayor (E)', notes: ['E', 'G#', 'B'] },
+                              { name: 'Fa Mayor (F)', notes: ['F', 'A', 'C'] },
+                              { name: 'Sol Mayor (G)', notes: ['G', 'B', 'D'] },
+                              { name: 'La Mayor (A)', notes: ['A', 'C#', 'E'] },
+                              { name: 'Si Mayor (B)', notes: ['B', 'D#', 'F#'] },
+                              { name: 'Do Menor (Cm)', notes: ['C', 'D#', 'G'] },
+                              { name: 'Do# Menor (C#m)', notes: ['C#', 'E', 'G#'] },
+                              { name: 'Re Menor (Dm)', notes: ['D', 'F', 'A'] },
+                              { name: 'Mi Menor (Em)', notes: ['E', 'G', 'B'] },
+                              { name: 'Fa Menor (Fm)', notes: ['F', 'G#', 'C'] },
+                              { name: 'Fa# Menor (F#m)', notes: ['F#', 'A', 'C#'] },
+                              { name: 'Sol Menor (Gm)', notes: ['G', 'A#', 'D'] },
+                              { name: 'La Menor (Am)', notes: ['A', 'C', 'E'] },
+                              { name: 'Si Menor (Bm)', notes: ['B', 'D', 'F#'] }
+                            ];
+                            
+                            const basicGuess = BASIC_GUESS_CHORDS.find(chord => chord.notes.every(n => detectedClasses.includes(n)));
+                            
+                            if (basicGuess) {
+                              return `🎯 ACORDE DETECTADO: ${basicGuess.name} (Adivinanza Básica)`;
+                            }
+                            
+                            return (
+                              <span style={{ color: '#94a3b8', fontSize: '0.9rem', textShadow: 'none', fontWeight: 'normal' }}>
+                                Escuchando... IA dudando (Confianza baja, {chordClassifier.getModelSize()} huellas guardadas)
+                              </span>
+                            );
+                          })()}
                         </div>
                       )
                     )}

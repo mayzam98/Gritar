@@ -44,7 +44,7 @@ export class ChordClassifier {
     // Squelch Dinámico: Filtro de silencio absoluto (RMS o energía total)
     let totalEnergy = 0;
     currentFeatures.forEach(f => totalEnergy += Math.max(0, f.amplitude + 100)); // +100 para volver positivos los dB
-    if (totalEnergy < 50) return null; // Umbral de energía mínima para evitar procesar siseos
+    if (totalEnergy < 15) return null; // Bajamos el umbral para micrófonos de bajo volumen
 
     const maxAmplitude = Math.max(...currentFeatures.map(f => f.amplitude));
     const lowestFreqNote = currentFeatures.reduce((prev, curr) => (curr.freq !== undefined && prev.freq !== undefined && curr.freq < prev.freq) ? curr : prev, currentFeatures[0]);
@@ -96,8 +96,8 @@ export class ChordClassifier {
     const highestConfidence = kNearest.find(k => k.chordName === bestChord)?.similarity || 0;
 
     // Umbral de Confianza Estricto (Squelch Dinámico)
-    // Evita falsos positivos. Si no se parece en un 70%, es ruido.
-    if (highestConfidence < 0.70) return null;
+    // Evita falsos positivos.
+    if (highestConfidence < 0.55) return null;
 
     return {
       chordName: bestChord,
