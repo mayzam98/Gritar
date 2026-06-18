@@ -15,9 +15,12 @@ export class Exercise {
   public readonly category: HandCategory;
   public readonly durationInSeconds: number;
   public readonly defaultBPM: number;
+  public readonly targetBPM: number;
   public readonly imageUrl: string;
   public readonly instructions: string[];
   public readonly fretboardData?: Position[];
+  public readonly sequence?: Position[][];
+  public readonly strummingPattern?: string[];
 
   constructor(
     id: string,
@@ -26,9 +29,12 @@ export class Exercise {
     category: HandCategory,
     durationInSeconds: number,
     defaultBPM: number,
+    targetBPM: number,
     imageUrl: string,
     instructions: string[],
-    fretboardData?: Position[]
+    fretboardData?: Position[],
+    sequence?: Position[][],
+    strummingPattern?: string[]
   ) {
     this.id = id;
     this.name = name;
@@ -36,8 +42,11 @@ export class Exercise {
     this.category = category;
     this.durationInSeconds = durationInSeconds;
     this.defaultBPM = defaultBPM;
+    this.targetBPM = targetBPM;
     this.imageUrl = imageUrl;
     this.instructions = instructions;
     this.fretboardData = fretboardData;
+    this.sequence = sequence;
+    this.strummingPattern = strummingPattern;
   }
 }

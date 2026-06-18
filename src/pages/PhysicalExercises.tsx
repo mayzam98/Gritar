@@ -5,7 +5,9 @@ import { GenerateWarmupRoutineUseCase } from '../core/application/GenerateWarmup
 import { Exercise } from '../core/domain/Exercise';
 import type { GlossaryTerm } from '../core/domain/Glossary';
 import FretboardVisualizer from '../components/ui/FretboardVisualizer';
+import StrummingVisualizer from '../components/ui/StrummingVisualizer';
 import GlossaryHighlighter from '../components/ui/GlossaryHighlighter';
+import NeonProgressRing from '../components/ui/NeonProgressRing';
 
 const useCase = new GenerateWarmupRoutineUseCase();
 
@@ -21,6 +23,27 @@ const PhysicalExercises: React.FC = () => {
 
   const [isChallengeModalOpen, setIsChallengeModalOpen] = useState(false);
   const [currentBPM, setCurrentBPM] = useState(120);
+  const [activeFrame, setActiveFrame] = useState(0);
+
+  const currentExercise = routine[currentExerciseIndex];
+  
+  // Calculate dynamic BPM here so it can drive the visual metronome
+  const progressPercentage = currentExercise ? ((currentExercise.durationInSeconds - timeLeft) / currentExercise.durationInSeconds) * 100 : 0;
+  const activeBpm = currentExercise ? currentExercise.defaultBPM + ((currentExercise.targetBPM - currentExercise.defaultBPM) * (progressPercentage / 100)) : 120;
+
+  // Visual Animation Metronome
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isTimerRunning && currentExercise && (currentExercise.sequence || currentExercise.strummingPattern)) {
+      // If it's a strumming pattern, we assume 1 step = 1 beat (or half beat depending on exercise, but let's use BPM)
+      // Actually, standard metronome is 1 beat = 1 step
+      const beatDurationMs = 60000 / activeBpm;
+      interval = setInterval(() => {
+        setActiveFrame(prev => prev + 1);
+      }, beatDurationMs);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, activeBpm, currentExercise]);
 
   // Warmup Timer Logic
   useEffect(() => {
@@ -80,8 +103,6 @@ const PhysicalExercises: React.FC = () => {
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
-
-  const currentExercise = routine[currentExerciseIndex];
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '20px' }}>
@@ -179,41 +200,91 @@ const PhysicalExercises: React.FC = () => {
       <AnimatePresence>
         {isWarmupModalOpen && (
           <motion.div 
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.98)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.98)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
             {!isWarmupFinished ? (
-              <div style={{ width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', height: '100%', paddingTop: '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}>
+              <div style={{ width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', backgroundColor: '#0f172a', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                
+                {/* Header Fijo */}
+                <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1e293b' }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '1px' }}>
                     EJERCICIO {currentExerciseIndex + 1} DE {routine.length}
                   </div>
-                  <button onClick={endWarmup} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Square size={20} /> <span style={{fontSize: '0.9rem'}}>Parar</span>
+                  <button onClick={endWarmup} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '6px 12px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Square size={14} /> <span style={{fontSize: '0.8rem', fontWeight: 600}}>Salir</span>
                   </button>
                 </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '20px' }}>
-                  <h2 style={{ fontSize: '2rem', marginBottom: '8px', fontWeight: 800 }}>
-                    {currentExercise?.name}
-                  </h2>
-                  <p style={{ fontSize: '1rem', color: 'var(--accent-primary)', marginBottom: '20px' }}>
-                    <GlossaryHighlighter text={currentExercise?.description || ''} onTermClick={setSelectedTerm} />
-                  </p>
+                {/* Body Scrolleable */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#1e293b', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    {currentExercise && (
+                      <div style={{ flexShrink: 0 }}>
+                        <NeonProgressRing 
+                          progress={progressPercentage}
+                          timeLeft={timeLeft}
+                          currentBpm={activeBpm}
+                          size={100}
+                        />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h2 style={{ fontSize: '1.4rem', margin: '0 0 8px 0', fontWeight: 800, lineHeight: 1.2 }}>
+                        {currentExercise?.name}
+                      </h2>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                        <GlossaryHighlighter text={currentExercise?.description || ''} onTermClick={setSelectedTerm} />
+                      </p>
+                    </div>
+                  </div>
 
-                  {currentExercise?.fretboardData ? (
-                    <div style={{ width: '100%', height: '180px', marginBottom: '20px', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '10px' }}>
-                      <FretboardVisualizer 
-                        positions={currentExercise.fretboardData} 
-                        startFret={Math.max(1, Math.min(...currentExercise.fretboardData.map(p => p.fret)) - 1)}
-                        fretCount={5}
-                      />
-                    </div>
-                  ) : currentExercise?.imageUrl ? (
-                    <div style={{ width: '100%', height: '200px', borderRadius: '16px', overflow: 'hidden', marginBottom: '20px', backgroundColor: '#1e293b', border: '1px solid #334155' }}>
-                      <img src={currentExercise.imageUrl} alt={currentExercise.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ) : null}
+                  {(() => {
+                    if (!currentExercise) return null;
+                    
+                    const seqLength = currentExercise.sequence?.length || 1;
+                    const seqIndex = activeFrame % seqLength;
+                    const currentPositions = (currentExercise.sequence && currentExercise.sequence[seqIndex]) || currentExercise.fretboardData || [];
+
+                    const hasFretboard = currentPositions.length > 0;
+                    const hasStrumming = currentExercise.strummingPattern && currentExercise.strummingPattern.length > 0;
+
+                    // Calcular el minFret sobre toda la secuencia para evitar que el diapasón se mueva
+                    const allFrets = currentExercise.sequence 
+                      ? currentExercise.sequence.flat().map(p => p.fret) 
+                      : (currentExercise.fretboardData?.map(p => p.fret) || []);
+                    
+                    const minFret = allFrets.length > 0 ? Math.min(...allFrets) : 1;
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
+                        {hasFretboard && (
+                          <div style={{ width: '100%', height: '180px', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '10px' }}>
+                            <FretboardVisualizer 
+                              positions={currentPositions} 
+                              startFret={Math.max(1, minFret - 1)}
+                              fretCount={5}
+                            />
+                          </div>
+                        )}
+                        {hasStrumming && (
+                          <div style={{ width: '100%', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '20px 10px' }}>
+                            <StrummingVisualizer 
+                              steps={currentExercise.strummingPattern || []}
+                              currentBeat={(activeFrame % (currentExercise.strummingPattern?.length || 1)) + 1}
+                              isEditable={false}
+                            />
+                          </div>
+                        )}
+                        {!hasFretboard && !hasStrumming && currentExercise.imageUrl && (
+                          <div style={{ width: '100%', height: '200px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#1e293b', border: '1px solid #334155' }}>
+                            <img src={currentExercise.imageUrl} alt={currentExercise.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -244,16 +315,10 @@ const PhysicalExercises: React.FC = () => {
                       )}
                     </AnimatePresence>
                   </div>
-
-                  <div style={{ textAlign: 'center', margin: '20px 0' }}>
-                    <div style={{ fontSize: '4.5rem', fontWeight: 900, color: timeLeft <= 10 ? '#ef4444' : 'white', fontVariantNumeric: 'tabular-nums', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-                      {formatTime(timeLeft)}
-                    </div>
-                  </div>
                 </div>
 
-                {/* Controls */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', paddingBottom: '20px', marginTop: 'auto' }}>
+                {/* Footer Fijo con Controles */}
+                <div style={{ padding: '20px', backgroundColor: '#1e293b', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                   <button className="btn btn-secondary" style={{ padding: '12px 0' }} onClick={handlePrevExercise} disabled={currentExerciseIndex === 0}>
                     <Rewind size={20} />
                   </button>
