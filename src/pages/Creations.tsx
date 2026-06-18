@@ -5,6 +5,10 @@ import InteractiveFretboard from '../components/ui/InteractiveFretboard';
 import type { Position } from '../core/domain/Exercise';
 import { analyzeChord } from '../core/domain/ChordAnalyzer';
 import { useAppStore } from '../core/application/store';
+import { audioEngine } from '../core/infrastructure/audio/AudioEngine';
+import { toPng } from 'html-to-image';
+import download from 'downloadjs';
+import { Volume2, Share2 } from 'lucide-react';
 
 const Creations: React.FC = () => {
   const [positions, setPositions] = useState<Position[]>([]);
@@ -17,9 +21,24 @@ const Creations: React.FC = () => {
       if (exists) {
         return prev.filter(p => !(p.string === string && p.fret === fret));
       } else {
+        // Modo Dios: Al poner un dedo, suena la nota físicamente
+        audioEngine.playNote(string, fret);
         return [...prev, { string, fret }];
       }
     });
+  };
+
+  const handleExport = (id: string, name: string) => {
+    const node = document.getElementById(`discovery-card-${id}`);
+    if (node) {
+      toPng(node, { cacheBust: true, backgroundColor: '#0f172a', style: { transform: 'scale(1)', margin: '0' } })
+        .then((dataUrl) => {
+          download(dataUrl, `gritar-acorde-${name.replace(/\s+/g, '-').toLowerCase()}.png`);
+        })
+        .catch((err) => {
+          console.error('Error exportando la imagen', err);
+        });
+    }
   };
 
   const analysis = analyzeChord(positions);
@@ -113,9 +132,13 @@ const Creations: React.FC = () => {
               <Trash2 size={18} />
               Limpiar
             </button>
+            <button className="btn btn-secondary" onClick={() => audioEngine.playChord(positions)} disabled={positions.length === 0} style={{ flex: 1, backgroundColor: 'rgba(96, 165, 250, 0.1)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
+              <Volume2 size={18} />
+              Sintetizar
+            </button>
             <button className="btn" onClick={saveCreation} disabled={positions.length === 0} style={{ flex: 2 }}>
               <Save size={18} />
-              Guardar
+              Guardar Acorde
             </button>
           </div>
         </div>
@@ -126,40 +149,60 @@ const Creations: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {(discoveries || []).map(discovery => (
                 <div key={discovery.id} className="card" style={{ margin: 0, padding: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Lightbulb size={16} color="#eab308" />
-                      {discovery.title}
-                    </h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        {discovery.positions?.length || 0} dedos
-                      </span>
-                      <button 
-                        onClick={() => deleteDiscovery(discovery.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem', padding: 0 }}
-                      >
-                        Eliminar
-                      </button>
+                  {/* Contenedor que será exportado */}
+                  <div id={`discovery-card-${discovery.id}`} style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc', fontWeight: 800 }}>
+                        <Lightbulb size={20} color="#eab308" />
+                        {discovery.title}
+                      </h4>
                     </div>
-                  </div>
-                  <div style={{ pointerEvents: 'none' }}>
-                    <InteractiveFretboard 
-                      positions={discovery.positions || []} 
-                      onPositionToggle={() => {}} 
-                      startFret={discovery.positions?.length ? Math.max(1, Math.min(...discovery.positions.map(p => p.fret)) - 1) : 1} 
-                      fretCount={5} 
-                    />
-                  </div>
-                  {discovery.tags && discovery.tags.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                      {discovery.tags.map(tag => (
-                        <span key={tag} className="badge" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', fontSize: '0.75rem' }}>
-                          {tag}
-                        </span>
-                      ))}
+                    <div style={{ pointerEvents: 'none' }}>
+                      <InteractiveFretboard 
+                        positions={discovery.positions || []} 
+                        onPositionToggle={() => {}} 
+                        startFret={discovery.positions?.length ? Math.max(1, Math.min(...discovery.positions.map(p => p.fret)) - 1) : 1} 
+                        fretCount={5} 
+                      />
                     </div>
-                  )}
+                    {discovery.tags && discovery.tags.length > 0 && (
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
+                        {discovery.tags.map(tag => (
+                          <span key={tag} className="badge" style={{ 
+                            background: 'linear-gradient(45deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2))', 
+                            color: '#e2e8f0', 
+                            fontSize: '0.75rem', 
+                            border: '1px solid rgba(168, 85, 247, 0.4)',
+                            boxShadow: '0 0 10px rgba(168, 85, 247, 0.2)'
+                          }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Botonera de acciones (No se exporta) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                    <button 
+                      onClick={() => audioEngine.playChord(discovery.positions || [])}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#60a5fa', fontSize: '0.9rem', padding: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                    >
+                      <Volume2 size={16} /> Oír
+                    </button>
+                    <button 
+                      onClick={() => handleExport(discovery.id, discovery.title)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#22c55e', fontSize: '0.9rem', padding: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                    >
+                      <Share2 size={16} /> Compartir
+                    </button>
+                    <button 
+                      onClick={() => deleteDiscovery(discovery.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.9rem', padding: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                    >
+                      <Trash2 size={16} /> Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

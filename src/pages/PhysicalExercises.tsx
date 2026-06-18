@@ -260,12 +260,14 @@ const PhysicalExercises: React.FC = () => {
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
                         {hasFretboard && (
-                          <div style={{ width: '100%', height: '180px', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '10px' }}>
-                            <FretboardVisualizer 
-                              positions={currentPositions} 
-                              startFret={Math.max(1, minFret - 1)}
-                              fretCount={5}
-                            />
+                          <div style={{ width: '100%', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '10px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '100%', maxWidth: '400px' }}>
+                              <FretboardVisualizer 
+                                positions={currentPositions} 
+                                startFret={Math.max(1, minFret - 1)}
+                                fretCount={5}
+                              />
+                            </div>
                           </div>
                         )}
                         {hasStrumming && (

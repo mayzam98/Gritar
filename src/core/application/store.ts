@@ -67,6 +67,10 @@ interface AppState {
   customRhythms: CustomRhythm[];
   addCustomRhythm: (rhythm: Omit<CustomRhythm, 'id' | 'createdAt'>) => void;
   deleteCustomRhythm: (id: string) => void;
+
+  // Gamified Academy
+  masteredTechniques: string[];
+  markTechniqueAsMastered: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -130,6 +134,13 @@ export const useAppStore = create<AppState>()(
       })),
       deleteCustomRhythm: (id) => set((state) => ({
         customRhythms: state.customRhythms.filter(r => r.id !== id)
+      })),
+
+      masteredTechniques: [],
+      markTechniqueAsMastered: (id) => set((state) => ({
+        masteredTechniques: state.masteredTechniques.includes(id) 
+          ? state.masteredTechniques 
+          : [...state.masteredTechniques, id]
       })),
     }),
     {

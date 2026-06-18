@@ -119,6 +119,85 @@ export class GenerateWarmupRoutineUseCase {
           [{ string: 4, fret: 7, finger: 3, id: 'active' }]
         ]
       ),
+      new Exercise(
+        'lh6',
+        'Ligados Descendentes (Pull-offs)',
+        'Fortalece los dedos al "jalar" la cuerda hacia abajo.',
+        'LEFT_HAND',
+        60,
+        60,
+        90,
+        '',
+        [
+          'Coloca los 4 dedos en la segunda cuerda (trastes 1, 2, 3, 4).',
+          'Tira del meñique (4) hacia abajo para que suene el anular (3).',
+          'Repite sucesivamente hasta llegar al índice (1).'
+        ],
+        undefined,
+        [
+          [
+            { string: 2, fret: 4, finger: 4, color: '#ef4444', id: 'f4' }, 
+            { string: 2, fret: 3, finger: 3, color: '#22c55e', id: 'f3' }, 
+            { string: 2, fret: 2, finger: 2, color: '#eab308', id: 'f2' }, 
+            { string: 2, fret: 1, finger: 1, color: '#3b82f6', id: 'f1' }
+          ],
+          [
+            { string: 2, fret: 3, finger: 3, color: '#22c55e', id: 'f3' }, 
+            { string: 2, fret: 2, finger: 2, color: '#eab308', id: 'f2' }, 
+            { string: 2, fret: 1, finger: 1, color: '#3b82f6', id: 'f1' }
+          ],
+          [
+            { string: 2, fret: 2, finger: 2, color: '#eab308', id: 'f2' }, 
+            { string: 2, fret: 1, finger: 1, color: '#3b82f6', id: 'f1' }
+          ],
+          [
+            { string: 2, fret: 1, finger: 1, color: '#3b82f6', id: 'f1' }
+          ]
+        ]
+      ),
+      new Exercise(
+        'lh7',
+        'Independencia: 1-4-2-3',
+        'Rompe los patrones habituales del cerebro para ganar agilidad.',
+        'LEFT_HAND',
+        60,
+        50,
+        85,
+        '',
+        [
+          'Usa la 3ra cuerda.',
+          'Toca el traste 1, luego salta al 4.',
+          'Vuelve al 2, y luego al 3.',
+          'Este cruce de dedos entrena los tendones independientes.'
+        ],
+        undefined,
+        [
+          [{ string: 3, fret: 1, finger: 1, color: '#3b82f6', id: 'active' }],
+          [{ string: 3, fret: 4, finger: 4, color: '#ef4444', id: 'active' }],
+          [{ string: 3, fret: 2, finger: 2, color: '#eab308', id: 'active' }],
+          [{ string: 3, fret: 3, finger: 3, color: '#22c55e', id: 'active' }]
+        ]
+      ),
+      new Exercise(
+        'lh8',
+        'Deslizamientos (Slides)',
+        'Suaviza la fricción y conecta posiciones del mástil rápidamente.',
+        'LEFT_HAND',
+        60,
+        60,
+        80,
+        '',
+        [
+          'Pisa el traste 5 de la 4ta cuerda con el dedo índice.',
+          'Sin soltar la presión, desliza el dedo hasta el traste 7.',
+          'Deslízalo de vuelta al 5.'
+        ],
+        undefined,
+        [
+          [{ string: 4, fret: 5, finger: 1, color: '#a855f7', id: 'active' }],
+          [{ string: 4, fret: 7, finger: 1, color: '#a855f7', id: 'active' }]
+        ]
+      ),
 
       // ----------------------------------------------------
       // RIGHT HAND EXERCISES (Focus on Strumming/Picking)
@@ -210,6 +289,59 @@ export class GenerateWarmupRoutineUseCase {
         undefined,
         undefined,
         ['B', '↑', '↓', '↑']
+      ),
+      new Exercise(
+        'rh6',
+        'Tresillos de Púa (Triplets)',
+        'Interioriza el ritmo de 3/4 o blues shuffle.',
+        'RIGHT_HAND',
+        60,
+        70,
+        100,
+        '',
+        [
+          'Agrupa los rasgueos de a tres: 1-2-3, 1-2-3.',
+          'La púa será Abajo-Arriba-Abajo, y luego Arriba-Abajo-Arriba.',
+          'Siente el acento cada tres golpes.'
+        ],
+        undefined,
+        undefined,
+        ['↓', '↑', '↓', '↑', '↓', '↑']
+      ),
+      new Exercise(
+        'rh7',
+        'Economy Sweep Muteado',
+        'Eficiencia absoluta: la púa "cae" a través de las cuerdas en lugar de saltarlas.',
+        'RIGHT_HAND',
+        60,
+        60,
+        90,
+        '',
+        [
+          'Mutea las cuerdas con tu mano izquierda (no pises, solo apoya).',
+          'Púa hacia Abajo 3 veces seguidas empujando.',
+          'Púa hacia Arriba 3 veces jalando.'
+        ],
+        undefined,
+        undefined,
+        ['↓', '↓', '↓', '↑', '↑', '↑']
+      ),
+      new Exercise(
+        'rh8',
+        'Rasgueo de Balada (Fogata)',
+        'El patrón rítmico más famoso del mundo pop/rock.',
+        'RIGHT_HAND',
+        60,
+        65,
+        90,
+        '',
+        [
+          'Aprende el clásico: Abajo, Abajo-Arriba, Arriba-Abajo-Arriba.',
+          'El secreto está en mantener la mano moviéndose en los silencios (-).'
+        ],
+        undefined,
+        undefined,
+        ['↓', '-', '↓', '↑', '-', '↑', '↓', '↑']
       ),
 
       // ----------------------------------------------------
