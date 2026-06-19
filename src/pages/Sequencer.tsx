@@ -311,29 +311,29 @@ const Sequencer: React.FC = () => {
     <div className="page-container" style={{ paddingBottom: '40px', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
       
       {/* Header Premium */}
-      <header className="page-header" style={{ marginBottom: '30px', padding: '30px 30px 0 30px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-            <Music size={24} color="#a78bfa" />
+      <header className="page-header" style={{ marginBottom: '10px', padding: '10px 15px 0 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '8px', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+            <Music size={20} color="#a78bfa" />
           </div>
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, color: 'white', letterSpacing: '-0.5px' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'white', letterSpacing: '-0.5px' }}>
               Song Builder
             </h1>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 600 }}>Secuenciador Multipista</p>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Secuenciador Multipista</p>
           </div>
         </div>
       </header>
 
       {/* Visualizador Principal Gigante */}
-      <div style={{ padding: '0 30px', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ padding: '0 15px', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
         <div style={{ 
           width: '100%',
           maxWidth: '800px',
           background: 'rgba(15, 23, 42, 0.6)', 
           backdropFilter: 'blur(20px)',
-          borderRadius: '32px', 
-          padding: '40px 20px',
+          borderRadius: '24px', 
+          padding: '24px 15px',
           border: '1px solid rgba(255,255,255,0.05)',
           boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
           display: 'flex', 
@@ -356,12 +356,12 @@ const Sequencer: React.FC = () => {
               key={activeChord?.name}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              style={{ fontSize: '3.5rem', margin: '0 0 30px 0', color: 'white', textShadow: '0 0 30px rgba(255,255,255,0.2)', fontWeight: 800, letterSpacing: '-2px' }}
+              style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', margin: '0 0 20px 0', color: 'white', textShadow: '0 0 30px rgba(255,255,255,0.2)', fontWeight: 800, letterSpacing: '-2px', textAlign: 'center' }}
             >
               {activeChord?.name || '---'}
             </motion.h2>
             
-            <div style={{ transform: 'scale(1.3)', transformOrigin: 'top center', pointerEvents: 'none', height: '220px' }}>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
               {(() => {
                 const isCurrentlyPlaying = isPlaying && blocks.length > 1 && activeBlockIndex >= 0;
                 let tLines = undefined;
@@ -449,7 +449,7 @@ const Sequencer: React.FC = () => {
       </div>
 
       {/* Transport Controls & Timeline */}
-      <div style={{ padding: '0 30px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ padding: '0 15px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
         
         {/* Sleek Transport Bar */}
         <div style={{ 
@@ -460,8 +460,10 @@ const Sequencer: React.FC = () => {
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.05)',
           borderRadius: '100px',
-          padding: '12px 24px',
-          boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'
+          padding: '10px 16px',
+          boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
@@ -644,8 +646,8 @@ const Sequencer: React.FC = () => {
                     animate={{ opacity: 1, scale: isSelected ? 1.05 : 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     style={{
-                      minWidth: '220px',
-                      height: '90px',
+                      minWidth: '200px',
+                      padding: '12px 16px',
                       borderRadius: '20px',
                       background: isPlayingActive 
                         ? 'rgba(139, 92, 246, 0.15)' 
@@ -654,13 +656,14 @@ const Sequencer: React.FC = () => {
                       boxShadow: isPlayingActive ? '0 0 30px rgba(139, 92, 246, 0.2)' : (isSelected ? '0 10px 20px rgba(0,0,0,0.3)' : 'none'),
                       backdropFilter: 'blur(10px)',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      justifyContent: 'center',
+                      gap: '12px',
                       position: 'relative',
                       flexShrink: 0,
                       cursor: 'pointer',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      padding: '0 20px'
                     }}
                   >
                     {/* Action Buttons Hover */}
@@ -685,13 +688,13 @@ const Sequencer: React.FC = () => {
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>{block.chord.name}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px', textAlign: 'center' }}>{block.chord.name}</span>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isPlayingActive ? '#c4b5fd' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{block.rhythm.name}</span>
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                         {block.rhythm.pattern.map((p: string, i: number) => {
                           const isStepActive = isPlayingActive && activeRhythmStep === i;
                           return (

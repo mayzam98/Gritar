@@ -127,7 +127,7 @@ const Creations: React.FC = () => {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '24px', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={() => setPositions([])} style={{ flex: 1 }}>
               <Trash2 size={18} />
               Limpiar

@@ -227,7 +227,7 @@ const Gym: React.FC = () => {
 
         {/* DSP Engine Panel */}
         <div className="card" style={{ marginTop: '24px', border: isListening ? '1px solid #10b981' : '1px solid #334155' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
             <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: isListening ? '#10b981' : 'var(--text-primary)' }}>
               <Activity size={20} />
               Motor DSP Analítico

@@ -197,7 +197,7 @@ const Transitions: React.FC = () => {
 
       <div style={{ padding: '0 20px' }}>
         <motion.div className="card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>
               <Activity color="#3b82f6" />
               Simulador Dinámico
@@ -211,7 +211,7 @@ const Transitions: React.FC = () => {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <select 
               className="search-input" 
               style={{ flex: 1, appearance: 'none', backgroundColor: '#1e293b', border: isPracticing && activeChordToggle === 'A' ? '2px solid #3b82f6' : '1px solid #334155', padding: '10px', color: 'white', borderRadius: '8px' }}
@@ -253,7 +253,7 @@ const Transitions: React.FC = () => {
               animate={{ height: 'auto', opacity: 1 }}
               style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>BPM (Velocidad)</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -308,7 +308,7 @@ const Transitions: React.FC = () => {
             </motion.div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', position: 'relative', flexWrap: 'wrap', gap: '16px' }}>
             {!isPracticing ? (
               <>
                 <div style={{ flex: 1, textAlign: 'center' }}>
