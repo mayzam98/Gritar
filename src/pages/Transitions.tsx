@@ -8,9 +8,11 @@ import { analyzeTransition } from '../core/domain/TransitionAnalyzer';
 import type { Position } from '../core/domain/Exercise';
 import { useAppStore } from '../core/application/store';
 import { CORE_CHORDS } from '../core/domain/ChordDictionary';
+import RhythmModal from '../components/ui/modals/RhythmModal';
 
 const Transitions: React.FC = () => {
-  const { savedSongs } = useAppStore();
+  const { savedSongs, customRhythms, addCustomRhythm } = useAppStore();
+  const [showRhythmModal, setShowRhythmModal] = useState(false);
   const location = useLocation();
   const initialState = location.state as any;
 
@@ -76,9 +78,15 @@ const Transitions: React.FC = () => {
     { id: 'bolero', name: 'Bolero', steps: ['B', '↓', '↑', '-', '↓', '↑'] },
   ];
 
-  let initialRhythms = RHYTHMS;
+  const mappedCustomRhythms = (customRhythms || []).map(r => ({
+    id: r.id,
+    name: r.name,
+    steps: r.pattern
+  }));
+
+  let initialRhythms = [...RHYTHMS, ...mappedCustomRhythms];
   if (initialState && initialState.rhythm) {
-      initialRhythms = [{ id: 'imported_rhythm', name: initialState.rhythm.name, steps: initialState.rhythm.pattern }, ...RHYTHMS];
+      initialRhythms = [{ id: 'imported_rhythm', name: initialState.rhythm.name, steps: initialState.rhythm.pattern }, ...initialRhythms];
   }
 
   const [isPracticing, setIsPracticing] = useState(false);
@@ -278,15 +286,23 @@ const Transitions: React.FC = () => {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                   <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Patrón de Ritmo</span>
-                  <select 
-                    value={selectedRhythm.id} 
-                    onChange={e => setSelectedRhythm(availableRhythms.find(r => r.id === e.target.value) || availableRhythms[0])}
-                    style={{ backgroundColor: 'transparent', color: '#60a5fa', border: 'none', fontWeight: 'bold' }}
-                  >
-                    {availableRhythms.map(r => (
-                      <option key={r.id} value={r.id} style={{ color: 'black' }}>{r.name}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                    <select 
+                      value={selectedRhythm.id} 
+                      onChange={e => setSelectedRhythm(availableRhythms.find(r => r.id === e.target.value) || availableRhythms[0])}
+                      style={{ backgroundColor: 'transparent', color: '#60a5fa', border: 'none', fontWeight: 'bold' }}
+                    >
+                      {availableRhythms.map(r => (
+                        <option key={r.id} value={r.id} style={{ color: 'black' }}>{r.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={() => setShowRhythmModal(true)}
+                      style={{ background: 'transparent', border: '1px solid #3b82f6', color: '#60a5fa', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      + Nuevo Ritmo
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -383,9 +399,22 @@ const Transitions: React.FC = () => {
               </ul>
             </div>
           )}
-          
         </motion.div>
       </div>
+
+      <RhythmModal 
+        isOpen={showRhythmModal}
+        onClose={() => setShowRhythmModal(false)}
+        onSave={(name, pattern) => {
+          const newRhythm = { name, pattern };
+          addCustomRhythm(newRhythm);
+          // Actualizar la lista local
+          const mapped = { id: `custom_${Date.now()}`, name, steps: pattern };
+          setAvailableRhythms([...availableRhythms, mapped]);
+          setSelectedRhythm(mapped);
+          setShowRhythmModal(false);
+        }}
+      />
     </div>
   );
 };
