@@ -1,0 +1,32 @@
+name: Deploy Frontend Gritar
+
+on:
+  push:
+    branches:
+      - main # Cambia a 'master' si esa es tu rama principal
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegando en el VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Navega a la carpeta de tu proyecto en el VPS
+            cd /var/www/gritar
+            
+            # 2. Descarga los últimos cambios de GitHub
+            git pull origin main
+            
+            # 3. Instala las dependencias (evita errores de paquetes faltantes)
+            npm install
+            
+            # 4. Construye la versión de producción
+            npm run build
+            
+            # (Opcional) Si necesitas reiniciar Nginx, descomenta la siguiente línea:
+            sudo systemctl restart nginx
