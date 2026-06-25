@@ -6,12 +6,20 @@ export class YouTubeTranscriptService {
     try {
       const response = await fetch(`/api/transcript?url=${encodeURIComponent(youtubeUrl)}`);
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "No se pudo conectar a YouTube a través del servidor local.");
+      const textResponse = await response.text();
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (e) {
+        if (textResponse.trim().toLowerCase().startsWith('<!doctype') || textResponse.trim().toLowerCase().startsWith('<html')) {
+          throw new Error("El servicio de transcripción requiere un servidor backend (no disponible en la versión estática).");
+        }
+        throw new Error("Error al leer la respuesta de subtítulos.");
       }
       
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo conectar a YouTube a través del servidor local.");
+      }
       
       if (!data.text || data.text.trim().length === 0) {
         throw new Error("El archivo de subtítulos está vacío o el video no tiene subtítulos disponibles.");

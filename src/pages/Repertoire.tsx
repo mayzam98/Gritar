@@ -45,7 +45,7 @@ const Repertoire: React.FC = () => {
   const [aiProviderType, setAiProviderType] = useState<AiProviderType>(
     (import.meta.env.VITE_AI_PROVIDER as AiProviderType) || AiProviderType.GEMINI
   );
-  const [apiKey, setApiKey] = useState(import.meta.env.VITE_AI_API_KEY || '');
+  const [apiKey, setApiKey] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const songs = [
