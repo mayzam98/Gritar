@@ -9,22 +9,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Descargar código en GitHub
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compilar proyecto
+        run: |
+          npm install
+          npm run build
+
       - name: Decodificar Llave SSH
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > /tmp/llave_ssh
           chmod 600 /tmp/llave_ssh
 
-      - name: Desplegando en el VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key_path: /tmp/llave_ssh
-          script: |
-            cd /var/www/gritar
-            git pull origin main
-            npm install
-            npm run build
-            
-            # (Opcional) Si necesitas reiniciar Nginx, descomenta la siguiente línea:
-            sudo systemctl restart nginx
+      - name: Subir archivos a tu VPS
+        run: |
+          # Crear la carpeta destino por si la borraste
+          ssh -i /tmp/llave_ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/gritar/dist"
+          
+          # Copiar la carpeta 'dist' ya compilada directo a tu servidor
+          scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no -r dist/* ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/dist/

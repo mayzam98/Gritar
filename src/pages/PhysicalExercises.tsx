@@ -177,7 +177,7 @@ const PhysicalExercises: React.FC = () => {
             <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '50%', marginBottom: '12px' }}>
               <Activity color="#3b82f6" size={28} />
             </div>
-            <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Mano Izquierda</h4>
+            <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Izquierda</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '8px' }}>Independencia y fuerza</p>
             <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Play size={14} /> Entrenar</button>
           </motion.div>
@@ -191,7 +191,7 @@ const PhysicalExercises: React.FC = () => {
             <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '12px', borderRadius: '50%', marginBottom: '12px' }}>
               <Target color="#22c55e" size={28} />
             </div>
-            <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Mano Derecha</h4>
+            <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Derecha</h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '8px' }}>Precisión de púa</p>
             <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Play size={14} /> Entrenar</button>
           </motion.div>
