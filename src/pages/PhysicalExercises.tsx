@@ -27,7 +27,7 @@ const PhysicalExercises: React.FC = () => {
 
   const currentExercise = routine[currentExerciseIndex];
   const audioCtxRef = React.useRef<AudioContext | null>(null);
-  
+
   // Calculate dynamic BPM here so it can drive the visual metronome
   const progressPercentage = currentExercise ? ((currentExercise.durationInSeconds - timeLeft) / currentExercise.durationInSeconds) * 100 : 0;
   const activeBpm = currentExercise ? currentExercise.defaultBPM + ((currentExercise.targetBPM - currentExercise.defaultBPM) * (progressPercentage / 100)) : 120;
@@ -47,24 +47,24 @@ const PhysicalExercises: React.FC = () => {
       interval = setInterval(() => {
         setActiveFrame(prev => {
           const nextFrame = prev + 1;
-          
+
           if (audioCtxRef.current) {
             const osc = audioCtxRef.current.createOscillator();
             const gain = audioCtxRef.current.createGain();
             osc.connect(gain);
             gain.connect(audioCtxRef.current.destination);
-            
+
             // Highlight the first beat
             const isFirstBeat = (nextFrame % 4) === 1;
-            osc.frequency.value = isFirstBeat ? 880 : 440; 
-            
+            osc.frequency.value = isFirstBeat ? 880 : 440;
+
             gain.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + 0.1);
-            
+
             osc.start(audioCtxRef.current.currentTime);
             osc.stop(audioCtxRef.current.currentTime + 0.1);
           }
-          
+
           return nextFrame;
         });
       }, beatDurationMs);
@@ -139,7 +139,7 @@ const PhysicalExercises: React.FC = () => {
       </header>
 
       {/* Top Section: Calentamiento Diario */}
-      <motion.div 
+      <motion.div
         className="card card-warmup"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -149,7 +149,7 @@ const PhysicalExercises: React.FC = () => {
           <div>
             <h2 className="card-title">
               <Flame color="#3b82f6" />
-              <span className="gradient-text">Calentamiento Diario</span>
+              <span className="gradient-text">Calentamiento</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
               5 minutos para soltar los dedos antes de tocar.
@@ -157,7 +157,7 @@ const PhysicalExercises: React.FC = () => {
           </div>
           <span className="badge">1/5 min</span>
         </div>
-        
+
         <button className="btn" onClick={() => startWarmup()}>
           <Play fill="currentColor" size={20} />
           Iniciar Rutina
@@ -168,8 +168,8 @@ const PhysicalExercises: React.FC = () => {
       <div style={{ padding: '0 20px', marginBottom: '20px' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', fontWeight: 600 }}>Enfoque Técnico</h3>
         <div className="grid-2">
-          <motion.div 
-            className="card" 
+          <motion.div
+            className="card"
             style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
             onClick={() => startWarmup('LEFT_HAND')}
             whileHover={{ scale: 1.05 }}
@@ -182,8 +182,8 @@ const PhysicalExercises: React.FC = () => {
             <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Play size={14} /> Entrenar</button>
           </motion.div>
 
-          <motion.div 
-            className="card" 
+          <motion.div
+            className="card"
             style={{ margin: 0, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
             onClick={() => startWarmup('RIGHT_HAND')}
             whileHover={{ scale: 1.05 }}
@@ -199,7 +199,7 @@ const PhysicalExercises: React.FC = () => {
       </div>
 
       {/* Bottom Section: Reto de Velocidad */}
-      <motion.div 
+      <motion.div
         className="card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -210,7 +210,7 @@ const PhysicalExercises: React.FC = () => {
             <Trophy color="#eab308" />
             Reto de Velocidad
           </h2>
-          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#eab308' }}>120 <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>BPM</span></span>
+          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#eab308' }}>120 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>BPM</span></span>
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
           Spider Walk - Nivel Intermedio. ¡Supera tu récord actual!
@@ -226,30 +226,30 @@ const PhysicalExercises: React.FC = () => {
       {/* Warmup Modal */}
       <AnimatePresence>
         {isWarmupModalOpen && (
-          <motion.div 
+          <motion.div
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.98)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
             {!isWarmupFinished ? (
               <div style={{ width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', backgroundColor: '#0f172a', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                
+
                 {/* Header Fijo */}
                 <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1e293b' }}>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '1px' }}>
                     EJERCICIO {currentExerciseIndex + 1} DE {routine.length}
                   </div>
                   <button onClick={endWarmup} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '6px 12px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Square size={14} /> <span style={{fontSize: '0.8rem', fontWeight: 600}}>Salir</span>
+                    <Square size={14} /> <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Salir</span>
                   </button>
                 </div>
 
                 {/* Body Scrolleable */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#1e293b', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     {currentExercise && (
                       <div style={{ flexShrink: 0 }}>
-                        <NeonProgressRing 
+                        <NeonProgressRing
                           progress={progressPercentage}
                           timeLeft={timeLeft}
                           currentBpm={activeBpm}
@@ -269,7 +269,7 @@ const PhysicalExercises: React.FC = () => {
 
                   {(() => {
                     if (!currentExercise) return null;
-                    
+
                     const seqLength = currentExercise.sequence?.length || 1;
                     const seqIndex = activeFrame % seqLength;
                     const currentPositions = (currentExercise.sequence && currentExercise.sequence[seqIndex]) || currentExercise.fretboardData || [];
@@ -278,10 +278,10 @@ const PhysicalExercises: React.FC = () => {
                     const hasStrumming = currentExercise.strummingPattern && currentExercise.strummingPattern.length > 0;
 
                     // Calcular el minFret sobre toda la secuencia para evitar que el diapasón se mueva
-                    const allFrets = currentExercise.sequence 
-                      ? currentExercise.sequence.flat().map(p => p.fret) 
+                    const allFrets = currentExercise.sequence
+                      ? currentExercise.sequence.flat().map(p => p.fret)
                       : (currentExercise.fretboardData?.map(p => p.fret) || []);
-                    
+
                     const minFret = allFrets.length > 0 ? Math.min(...allFrets) : 1;
 
                     return (
@@ -289,8 +289,8 @@ const PhysicalExercises: React.FC = () => {
                         {hasFretboard && (
                           <div style={{ width: '100%', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '10px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ width: '100%', maxWidth: '400px' }}>
-                              <FretboardVisualizer 
-                                positions={currentPositions} 
+                              <FretboardVisualizer
+                                positions={currentPositions}
                                 startFret={Math.max(1, minFret - 1)}
                                 fretCount={5}
                               />
@@ -299,7 +299,7 @@ const PhysicalExercises: React.FC = () => {
                         )}
                         {hasStrumming && (
                           <div style={{ width: '100%', backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', padding: '20px 10px' }}>
-                            <StrummingVisualizer 
+                            <StrummingVisualizer
                               steps={currentExercise.strummingPattern || []}
                               currentBeat={(activeFrame % (currentExercise.strummingPattern?.length || 1)) + 1}
                               isEditable={false}
@@ -328,10 +328,10 @@ const PhysicalExercises: React.FC = () => {
                         {showInstructions ? 'Ocultar' : 'Ver pasos'}
                       </button>
                     </div>
-                    
+
                     <AnimatePresence>
                       {showInstructions && (
-                        <motion.ul 
+                        <motion.ul
                           initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                           style={{ paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}
                         >
@@ -376,7 +376,7 @@ const PhysicalExercises: React.FC = () => {
       {/* Speed Challenge Modal */}
       <AnimatePresence>
         {isChallengeModalOpen && (
-          <motion.div 
+          <motion.div
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.95)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
             initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
           >
@@ -387,7 +387,7 @@ const PhysicalExercises: React.FC = () => {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', textAlign: 'center' }}>
                 Ajusta el metrónomo y registra tu nuevo récord de velocidad limpio.
               </p>
@@ -420,7 +420,7 @@ const PhysicalExercises: React.FC = () => {
       {/* Glossary Modal */}
       <AnimatePresence>
         {selectedTerm && (
-          <motion.div 
+          <motion.div
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,23,42,0.95)', zIndex: 3000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
           >
@@ -431,11 +431,11 @@ const PhysicalExercises: React.FC = () => {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <p style={{ color: 'var(--text-primary)', fontSize: '1rem', lineHeight: '1.5', marginBottom: '20px' }}>
                 {selectedTerm.description}
               </p>
-              
+
               <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '8px' }}>
                 <strong style={{ color: '#60a5fa', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px' }}>💡 TIP DE ORO:</strong>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{selectedTerm.tips}</p>
