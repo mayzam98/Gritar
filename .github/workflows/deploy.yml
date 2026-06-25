@@ -29,8 +29,14 @@ jobs:
 
       - name: Subir archivos a tu VPS
         run: |
-          # Crear la carpeta destino por si la borraste
+          # Crear las carpetas destino por si las borraste
           ssh -i /tmp/llave_ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "mkdir -p /var/www/gritar/dist"
           
-          # Copiar la carpeta 'dist' ya compilada directo a tu servidor
+          # Copiar la carpeta 'dist' ya compilada directo a tu servidor (Frontend)
           scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no -r dist/* ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/dist/
+
+          # Copiar archivos del Backend
+          scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no server.js package.json package-lock.json ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/
+          
+          # Iniciar el backend con Node.js y PM2 en el servidor
+          ssh -i /tmp/llave_ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/gritar && npm install --omit=dev && npx pm2 restart gritar-backend || npx pm2 start server.js --name gritar-backend"
