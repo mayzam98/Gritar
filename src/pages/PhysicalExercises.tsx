@@ -152,7 +152,7 @@ const PhysicalExercises: React.FC = () => {
               <span className="gradient-text">Calentamiento</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              5 minutos para soltar los dedos antes de tocar.
+              5 minutos para soltar los dedos.
             </p>
           </div>
           <span className="badge">1/5 min</span>
