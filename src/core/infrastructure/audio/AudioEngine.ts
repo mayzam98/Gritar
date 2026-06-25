@@ -24,6 +24,18 @@ export class AudioEngine {
     }
   }
 
+  public unlock() {
+    this.init();
+    // Create an empty buffer and play it to force unlock on iOS
+    if (this.audioCtx) {
+      const buffer = this.audioCtx.createBuffer(1, 1, 22050);
+      const source = this.audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.audioCtx.destination);
+      source.start(0);
+    }
+  }
+
   // Notas MIDI base de cada cuerda (Afinación Estándar)
   // 6: Mi grave (E2) = 40
   // 5: La (A2) = 45

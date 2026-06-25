@@ -30,12 +30,28 @@ const ChordCard = ({ chord, idx, startFret, isTraining, selectedTrainChord }: an
     y.set(0);
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touch = e.touches[0];
+    const mouseX = (touch.clientX - rect.left) / rect.width;
+    const mouseY = (touch.clientY - rect.top) / rect.height;
+    x.set(mouseX - 0.5);
+    y.set(mouseY - 0.5);
+  };
+
+  const handleTouchEnd = () => {
+    x.set(0);
+    y.set(0);
+  };
+
   // Efecto de neón y elevación en 3D
   return (
     <motion.div 
       className="card" 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       whileHover={{ scale: 1.02 }}
       style={{ 
         margin: 0, 
@@ -98,7 +114,7 @@ const Gym: React.FC = () => {
   const [trainingMessage, setTrainingMessage] = React.useState<{text: string, type: 'success'|'error'} | null>(null);
   const [countdown, setCountdown] = React.useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  const animationRef = React.useRef<number>();
+  const animationRef = React.useRef<number>(0);
   const predictionBufferRef = React.useRef<string[]>([]);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -279,26 +295,7 @@ const Gym: React.FC = () => {
                   style={{ width: '100%', height: '60px', marginBottom: '12px', opacity: 0.8, borderRadius: '4px', backgroundColor: 'rgba(0,0,0,0.3)' }} 
                 />
 
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {detectedNotes.length === 0 && (
-                    <span style={{ color: '#475569' }}>Silencio detectado...</span>
-                  )}
-                  {detectedNotes.map((n, i) => (
-                    <div key={i} style={{ 
-                      backgroundColor: `rgba(16, 185, 129, ${Math.max(0.2, (n.amplitude + 100) / 100)})`,
-                      border: '1px solid #10b981',
-                      padding: '4px 12px',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
-                    }}>
-                      <span style={{ fontWeight: 800, fontSize: '1.2rem' }}>{n.note.replace(/[0-9]/g, '')}</span>
-                      <span style={{ fontSize: '0.6rem', color: '#a7f3d0' }}>{n.freq.toFixed(1)}Hz</span>
-                    </div>
-                  ))}
-                </div>
+
                 {/* Training Mode UI */}
                 {isTraining ? (
                   <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(234, 179, 8, 0.1)', border: '1px solid #eab308', borderRadius: '8px' }}>
@@ -427,75 +424,111 @@ const Gym: React.FC = () => {
                       Entrenar Modelo (Mejorar precisión)
                     </button>
                     
-                    {/* Machine Learning Guessing */}
-                    {prediction ? (
-                      <div style={{ 
-                        marginTop: '16px', 
-                        textAlign: 'center', 
-                        color: prediction.confidence > 80 ? '#34d399' : prediction.confidence > 40 ? '#60a5fa' : '#ef4444', 
-                        fontSize: '1.1rem', 
-                        fontWeight: 800,
-                        textShadow: prediction.confidence > 80 ? '0 0 10px rgba(52, 211, 153, 0.5)' : prediction.confidence > 40 ? '0 0 10px rgba(96, 165, 250, 0.5)' : '0 0 10px rgba(239, 68, 68, 0.5)',
-                        padding: '8px',
-                        borderTop: '1px solid rgba(255,255,255, 0.1)'
-                      }}>
-                        🧠 PREDICCIÓN IA: {prediction.chordName} ({prediction.confidence}% similitud)
+                    {/* Holographic Radar Widget */}
+                    <div style={{ 
+                      marginTop: '24px', 
+                      backgroundColor: 'rgba(0,0,0,0.2)', 
+                      borderRadius: '16px', 
+                      border: '1px solid rgba(255,255,255,0.05)', 
+                      height: '180px', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Background grid/glow effect */}
+                      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                      
+                      {(() => {
+                        const detectedClasses = Array.from(new Set(detectedNotes.map(d => d.note.replace(/\d+$/, ''))));
+                        const BASIC_GUESS_CHORDS = [
+                          { name: 'Do Mayor (C)', notes: ['C', 'E', 'G'] }, { name: 'Re Mayor (D)', notes: ['D', 'F#', 'A'] },
+                          { name: 'Mi Mayor (E)', notes: ['E', 'G#', 'B'] }, { name: 'Fa Mayor (F)', notes: ['F', 'A', 'C'] },
+                          { name: 'Sol Mayor (G)', notes: ['G', 'B', 'D'] }, { name: 'La Mayor (A)', notes: ['A', 'C#', 'E'] },
+                          { name: 'Si Mayor (B)', notes: ['B', 'D#', 'F#'] }, { name: 'Do Menor (Cm)', notes: ['C', 'D#', 'G'] },
+                          { name: 'Re Menor (Dm)', notes: ['D', 'F', 'A'] }, { name: 'Mi Menor (Em)', notes: ['E', 'G', 'B'] },
+                          { name: 'La Menor (Am)', notes: ['A', 'C', 'E'] }
+                        ];
+                        const basicGuess = detectedNotes.length > 2 ? BASIC_GUESS_CHORDS.find(chord => chord.notes.every(n => detectedClasses.includes(n))) : null;
+                        
+                        const color = prediction 
+                          ? (prediction.confidence > 80 ? '#34d399' : '#fbbf24') 
+                          : (basicGuess ? '#60a5fa' : '#475569');
+
+                        const text = prediction ? prediction.chordName : (basicGuess ? basicGuess.name.split(' ')[0] : '---');
+                        const subtext = prediction ? `${prediction.confidence}%` : (basicGuess ? 'Básico' : 'ESCUCHANDO');
+                        const isActive = prediction || basicGuess;
+
+                        return (
+                          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            {/* Inner Core */}
+                            <motion.div
+                              animate={{ 
+                                scale: prediction ? 1 + (prediction.confidence / 100) * 0.15 : 1,
+                                boxShadow: isActive ? `0 0 20px ${color}` : '0 0 0px transparent'
+                              }}
+                              transition={{ type: 'spring', bounce: 0.5 }}
+                              style={{
+                                width: '100px',
+                                height: '100px',
+                                borderRadius: '50%',
+                                border: `2px solid ${color}`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 2,
+                                backgroundColor: '#0f172a',
+                                textShadow: `0 0 10px ${color}`
+                              }}
+                            >
+                              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff' }}>{text}</span>
+                              <span style={{ fontSize: '0.7rem', color: color, fontWeight: 'bold', letterSpacing: '1px' }}>{subtext}</span>
+                            </motion.div>
+
+                            {/* Outer Rotating Rings */}
+                            {isActive && (
+                              <>
+                                <motion.div
+                                  animate={{ rotate: 360 }}
+                                  transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                                  style={{
+                                    position: 'absolute',
+                                    width: '130px',
+                                    height: '130px',
+                                    borderRadius: '50%',
+                                    border: `1px solid transparent`,
+                                    borderTop: `2px solid ${color}`,
+                                    borderRight: `2px solid ${color}`,
+                                    opacity: 0.6,
+                                    zIndex: 1
+                                  }}
+                                />
+                                <motion.div
+                                  animate={{ rotate: -360 }}
+                                  transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
+                                  style={{
+                                    position: 'absolute',
+                                    width: '150px',
+                                    height: '150px',
+                                    borderRadius: '50%',
+                                    border: `1px dashed ${color}`,
+                                    opacity: 0.3,
+                                    zIndex: 1
+                                  }}
+                                />
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      
+                      <div style={{ position: 'absolute', bottom: '12px', fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                        Neural Matcher v2.0
                       </div>
-                    ) : (
-                      detectedNotes.length > 2 && (
-                        <div style={{ 
-                          marginTop: '16px', 
-                          textAlign: 'center', 
-                          color: '#60a5fa', 
-                          fontSize: '1.1rem', 
-                          fontWeight: 800,
-                          textShadow: '0 0 10px rgba(96, 165, 250, 0.5)',
-                          padding: '8px',
-                          borderTop: '1px solid rgba(96, 165, 250, 0.2)'
-                        }}>
-                          {(() => {
-                            const detectedClasses = Array.from(new Set(detectedNotes.map(d => d.note.replace(/\d+$/, ''))));
-                            const BASIC_GUESS_CHORDS = [
-                              { name: 'Do Mayor Séptima (Cmaj7)', notes: ['C', 'E', 'G', 'B'] },
-                              { name: 'Do Séptima (C7)', notes: ['C', 'E', 'G', 'A#'] },
-                              { name: 'Re Séptima (D7)', notes: ['D', 'F#', 'A', 'C'] },
-                              { name: 'Mi Séptima (E7)', notes: ['E', 'G#', 'B', 'D'] },
-                              { name: 'Sol Séptima (G7)', notes: ['G', 'B', 'D', 'F'] },
-                              { name: 'La Séptima (A7)', notes: ['A', 'C#', 'E', 'G'] },
-                              { name: 'Si Séptima (B7)', notes: ['B', 'D#', 'F#', 'A'] },
-                              { name: 'Do Mayor (C)', notes: ['C', 'E', 'G'] },
-                              { name: 'Re Mayor (D)', notes: ['D', 'F#', 'A'] },
-                              { name: 'Mi Mayor (E)', notes: ['E', 'G#', 'B'] },
-                              { name: 'Fa Mayor (F)', notes: ['F', 'A', 'C'] },
-                              { name: 'Sol Mayor (G)', notes: ['G', 'B', 'D'] },
-                              { name: 'La Mayor (A)', notes: ['A', 'C#', 'E'] },
-                              { name: 'Si Mayor (B)', notes: ['B', 'D#', 'F#'] },
-                              { name: 'Do Menor (Cm)', notes: ['C', 'D#', 'G'] },
-                              { name: 'Do# Menor (C#m)', notes: ['C#', 'E', 'G#'] },
-                              { name: 'Re Menor (Dm)', notes: ['D', 'F', 'A'] },
-                              { name: 'Mi Menor (Em)', notes: ['E', 'G', 'B'] },
-                              { name: 'Fa Menor (Fm)', notes: ['F', 'G#', 'C'] },
-                              { name: 'Fa# Menor (F#m)', notes: ['F#', 'A', 'C#'] },
-                              { name: 'Sol Menor (Gm)', notes: ['G', 'A#', 'D'] },
-                              { name: 'La Menor (Am)', notes: ['A', 'C', 'E'] },
-                              { name: 'Si Menor (Bm)', notes: ['B', 'D', 'F#'] }
-                            ];
-                            
-                            const basicGuess = BASIC_GUESS_CHORDS.find(chord => chord.notes.every(n => detectedClasses.includes(n)));
-                            
-                            if (basicGuess) {
-                              return `🎯 ACORDE DETECTADO: ${basicGuess.name} (Adivinanza Básica)`;
-                            }
-                            
-                            return (
-                              <span style={{ color: '#94a3b8', fontSize: '0.9rem', textShadow: 'none', fontWeight: 'normal' }}>
-                                Escuchando... IA dudando (Confianza baja, {chordClassifier.getModelSize()} huellas guardadas)
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      )
-                    )}
+                    </div>
                   </>
                 )}
               </>

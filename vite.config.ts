@@ -6,8 +6,8 @@ import { YoutubeTranscript } from 'youtube-transcript'
 const youtubeTranscriptPlugin = () => {
   return {
     name: 'youtube-transcript-api',
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+    configureServer(server: any) {
+      server.middlewares.use(async (req: any, res: any, next: any) => {
         if (req.url && req.url.startsWith('/api/transcript')) {
           try {
             const urlObj = new URL(req.url, `http://${req.headers.host}`);
@@ -39,7 +39,7 @@ const youtubeTranscriptPlugin = () => {
             
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ text: formattedText, title: title }));
-          } catch (error) {
+          } catch (error: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: error.message }));
           }
@@ -53,5 +53,6 @@ const youtubeTranscriptPlugin = () => {
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [react(), youtubeTranscriptPlugin()],
 })

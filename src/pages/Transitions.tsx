@@ -100,7 +100,7 @@ const Transitions: React.FC = () => {
   const audioCtxRef = React.useRef<AudioContext | null>(null);
 
   React.useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isPracticing) {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();

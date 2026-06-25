@@ -25,7 +25,7 @@ const YouTubeSyncPlayer: React.FC<YouTubeSyncPlayerProps> = ({
 }) => {
   const [player, setPlayer] = useState<any>(null);
   const [activeChordId, setActiveChordId] = useState<string | null>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
 
   const onPlayerReady = (event: any) => {
     setPlayer(event.target);

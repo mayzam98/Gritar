@@ -8,8 +8,25 @@ import Technique from './pages/Technique';
 import Repertoire from './pages/Repertoire';
 import Creations from './pages/Creations';
 import Sequencer from './pages/Sequencer';
+import { audioEngine } from './core/infrastructure/audio/AudioEngine';
 
 function App() {
+  React.useEffect(() => {
+    const unlockAudio = () => {
+      audioEngine.unlock();
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+    };
+
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+
+    return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+    };
+  }, []);
+
   return (
     <Router>
       <div className="app-container">

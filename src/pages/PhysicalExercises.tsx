@@ -26,20 +26,47 @@ const PhysicalExercises: React.FC = () => {
   const [activeFrame, setActiveFrame] = useState(0);
 
   const currentExercise = routine[currentExerciseIndex];
+  const audioCtxRef = React.useRef<AudioContext | null>(null);
   
   // Calculate dynamic BPM here so it can drive the visual metronome
   const progressPercentage = currentExercise ? ((currentExercise.durationInSeconds - timeLeft) / currentExercise.durationInSeconds) * 100 : 0;
   const activeBpm = currentExercise ? currentExercise.defaultBPM + ((currentExercise.targetBPM - currentExercise.defaultBPM) * (progressPercentage / 100)) : 120;
 
-  // Visual Animation Metronome
+  // Visual Animation Metronome & Audio Tick
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isTimerRunning && currentExercise && (currentExercise.sequence || currentExercise.strummingPattern)) {
-      // If it's a strumming pattern, we assume 1 step = 1 beat (or half beat depending on exercise, but let's use BPM)
-      // Actually, standard metronome is 1 beat = 1 step
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+
       const beatDurationMs = 60000 / activeBpm;
       interval = setInterval(() => {
-        setActiveFrame(prev => prev + 1);
+        setActiveFrame(prev => {
+          const nextFrame = prev + 1;
+          
+          if (audioCtxRef.current) {
+            const osc = audioCtxRef.current.createOscillator();
+            const gain = audioCtxRef.current.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtxRef.current.destination);
+            
+            // Highlight the first beat
+            const isFirstBeat = (nextFrame % 4) === 1;
+            osc.frequency.value = isFirstBeat ? 880 : 440; 
+            
+            gain.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + 0.1);
+            
+            osc.start(audioCtxRef.current.currentTime);
+            osc.stop(audioCtxRef.current.currentTime + 0.1);
+          }
+          
+          return nextFrame;
+        });
       }, beatDurationMs);
     }
     return () => clearInterval(interval);

@@ -24,7 +24,7 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 80px; /* Space for bottom nav */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* Space for bottom nav + safe area */
 }
 
 /* App Container */
@@ -49,6 +49,8 @@ body {
   justify-content: space-around;
   align-items: center;
   padding: 0 10px;
+  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(72px + env(safe-area-inset-bottom));
   z-index: 1000;
 }
 
@@ -98,7 +100,7 @@ body {
 
 /* Page Headers */
 .page-header {
-  padding: 12px 20px;
+  padding: calc(12px + env(safe-area-inset-top)) 20px 12px 20px;
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, transparent 100%);
 }
 

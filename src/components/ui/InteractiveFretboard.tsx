@@ -1,12 +1,16 @@
 import React from 'react';
 import type { Position } from '../../core/domain/Exercise';
 
+import { audioEngine } from '../../core/infrastructure/audio/AudioEngine';
+
 interface InteractiveFretboardProps {
   positions: Position[];
   onPositionToggle?: (string: number, fret: number) => void;
   startFret?: number;
   fretCount?: number;
 }
+
+
 
 const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({ 
   positions, 
@@ -94,7 +98,18 @@ const InteractiveFretboard: React.FC<InteractiveFretboardProps> = ({
         const isActive = !!activePos;
 
         zones.push(
-          <g key={`zone-${string}-${actualFret}`} onClick={() => onPositionToggle && onPositionToggle(string, actualFret)} style={{ cursor: onPositionToggle ? 'pointer' : 'default' }}>
+          <g 
+            key={`zone-${string}-${actualFret}`} 
+            onClick={() => {
+              if (isActive) {
+                audioEngine.playNote(string, actualFret);
+              }
+              if (onPositionToggle) {
+                onPositionToggle(string, actualFret);
+              }
+            }} 
+            style={{ cursor: onPositionToggle || isActive ? 'pointer' : 'default' }}
+          >
             <rect 
               x={x - fretWidth/2} 
               y={y - stringSpacing/2} 
