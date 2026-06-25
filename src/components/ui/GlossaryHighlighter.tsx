@@ -15,7 +15,7 @@ const GlossaryHighlighter: React.FC<GlossaryHighlighterProps> = ({ text, onTermC
       allKeywords.push({ keyword: kw, term });
     });
   });
-  
+
   allKeywords.sort((a, b) => b.keyword.length - a.keyword.length);
 
   // We need to parse the text and find keywords
@@ -36,17 +36,17 @@ const GlossaryHighlighter: React.FC<GlossaryHighlighterProps> = ({ text, onTermC
     }
 
     const matchedTerm = allKeywords.find(k => k.keyword.toLowerCase() === matchedStr.toLowerCase());
-    
+
     parts.push(
-      <span 
-        key={startIndex} 
+      <span
+        key={startIndex}
         onClick={() => matchedTerm && onTermClick(matchedTerm.term)}
         style={{
           color: '#60a5fa',
           textDecoration: 'underline',
           textDecorationStyle: 'dotted',
           cursor: 'pointer',
-          fontWeight: 600
+          fontWeight: 601
         }}
       >
         {matchedStr}
