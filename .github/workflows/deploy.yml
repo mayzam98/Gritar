@@ -9,31 +9,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Test SSH Connection (Debug)
+      - name: Decodificar Llave SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          ssh -v -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "echo 'Conexion exitosa por SSH nativo'"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > /tmp/llave_ssh
+          chmod 600 /tmp/llave_ssh
 
       - name: Desplegando en el VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: /tmp/llave_ssh
           script: |
-            # 1. Navega a la carpeta de tu proyecto en el VPS
             cd /var/www/gritar
-            
-            # 2. Descarga los últimos cambios de GitHub
             git pull origin main
-            
-            # 3. Instala las dependencias (evita errores de paquetes faltantes)
             npm install
-            
-            # 4. Construye la versión de producción
             npm run build
             
             # (Opcional) Si necesitas reiniciar Nginx, descomenta la siguiente línea:
