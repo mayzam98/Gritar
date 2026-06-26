@@ -33,6 +33,10 @@ app.get('/api/transcript', async (req, res) => {
     
     res.json({ text: formattedText, title: title });
   } catch (error) {
+    if (error.message && error.message.includes('Transcript is disabled')) {
+      console.warn(`[YoutubeTranscript] Transcript disabled or not found for: ${videoUrl}`);
+      return res.status(404).json({ error: 'Transcript is disabled on this video' });
+    }
     console.error("Transcript error:", error);
     res.status(500).json({ error: error.message });
   }

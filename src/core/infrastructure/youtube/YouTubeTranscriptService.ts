@@ -18,7 +18,11 @@ export class YouTubeTranscriptService {
       }
       
       if (!response.ok) {
-        throw new Error(data.error || "No se pudo conectar a YouTube a través del servidor local.");
+        let errorMessage = data.error || "No se pudo conectar a YouTube a través del servidor local.";
+        if (errorMessage.includes("Transcript is disabled")) {
+          errorMessage = "Este video de YouTube no tiene subtítulos (CC) habilitados o no están disponibles. La IA necesita que el video tenga subtítulos para poder analizarlo. Por favor, intenta con otro video.";
+        }
+        throw new Error(errorMessage);
       }
       
       if (!data.text || data.text.trim().length === 0) {
