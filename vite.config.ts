@@ -54,7 +54,7 @@ const youtubeTranscriptPlugin = () => {
                 skipDownload: true,
                 writeAutoSub: true,
                 writeSub: true,
-                extractorArgs: 'youtube:player_client=android'
+                extractorArgs: 'youtube:player_client=default,ios;po_token=web+MsdFwO-b2c6d4G5e8A9C1V2X3Z4Q5Y6W7E8R9T0Y1U2I3O4P5A6S7D8F9G0H1J2K3L4Z5X6C7V8B9N0M1Q2W3E4R5T6Y7U8I9O0P1A2S3D4F5G6H7J8K9L0Z1X2C3V4B5N6M7'
               } as any) as any;
               
               let subs = output.subtitles;
