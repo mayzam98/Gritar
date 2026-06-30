@@ -18,7 +18,17 @@ const youtubeTranscriptPlugin = () => {
               return res.end(JSON.stringify({ error: 'Missing url parameter' }));
             }
 
-            const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+            const customFetch = (url: any, options: any) => {
+              options = options || {};
+              options.headers = {
+                ...options.headers,
+                'Cookie': 'CONSENT=YES+cb.20230101-17-p0.es+FX+555',
+                'Accept-Language': 'es,en;q=0.9'
+              };
+              return fetch(url, options);
+            };
+
+            const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl, { fetch: customFetch });
             
             // Format the transcript to include timestamps so the AI knows exactly when things happen
             // Example: [12] Hola a todos

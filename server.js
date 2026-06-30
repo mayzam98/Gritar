@@ -13,7 +13,17 @@ app.get('/api/transcript', async (req, res) => {
   }
 
   try {
-    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+    const customFetch = (url, options) => {
+      options = options || {};
+      options.headers = {
+        ...options.headers,
+        'Cookie': 'CONSENT=YES+cb.20230101-17-p0.es+FX+555',
+        'Accept-Language': 'es,en;q=0.9'
+      };
+      return fetch(url, options);
+    };
+
+    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl, { fetch: customFetch });
     
     // Format the transcript to include timestamps
     const formattedText = transcriptArray.map(t => "[" + Math.floor(t.offset / 1000) + "] " + t.text).join("\n");
