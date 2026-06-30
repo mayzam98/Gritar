@@ -22,8 +22,9 @@ const youtubeTranscriptPlugin = () => {
               options = options || {};
               options.headers = {
                 ...options.headers,
-                'Cookie': 'CONSENT=YES+cb.20230101-17-p0.es+FX+555',
-                'Accept-Language': 'es,en;q=0.9'
+                'Cookie': 'SOCS=CAI',
+                'Accept-Language': 'es,en;q=0.9',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
               };
               return fetch(url, options);
             };
