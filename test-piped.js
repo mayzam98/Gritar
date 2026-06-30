@@ -1,18 +1,19 @@
 async function testPiped() {
-  const url = 'https://pipedapi.kavin.rocks/streams/yOOOvy7JqrY';
+  const videoId = 'qkBjCjvX64o';
   try {
-    const res = await fetch(url);
+    const res = await fetch(`https://pipedapi.kavin.rocks/streams/${videoId}`);
     const data = await res.json();
-    console.log("Subtitles:", data.subtitles);
-    if (data.subtitles && data.subtitles.length > 0) {
+    if (data && data.subtitles && data.subtitles.length > 0) {
+      console.log("Found subtitles:", data.subtitles.map(s => s.code));
       const esSub = data.subtitles.find(s => s.code === 'es') || data.subtitles[0];
-      console.log("Found sub:", esSub.url);
       const subRes = await fetch(esSub.url);
       const subText = await subRes.text();
-      console.log("Sub content starts with:", subText.substring(0, 100));
+      console.log("Content starts with:", subText.substring(0, 200));
+    } else {
+      console.log("No subtitles found in Piped API");
     }
-  } catch (e) {
-    console.error(e);
+  } catch(e) {
+    console.error("Error:", e);
   }
 }
 testPiped();
