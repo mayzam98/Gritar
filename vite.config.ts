@@ -55,7 +55,7 @@ const youtubeTranscriptPlugin = () => {
                 writeAutoSub: true,
                 writeSub: true,
                 extractorArgs: 'youtube:player_client=android'
-              }) as any;
+              } as any) as any;
               
               let subs = output.subtitles;
               if (!subs || Object.keys(subs).length === 0) subs = output.automatic_captions;
