@@ -54,7 +54,7 @@ const youtubeTranscriptPlugin = () => {
                 skipDownload: true,
                 writeAutoSub: true,
                 writeSub: true
-              });
+              }) as any;
               
               let subs = output.subtitles;
               if (!subs || Object.keys(subs).length === 0) subs = output.automatic_captions;
@@ -65,7 +65,7 @@ const youtubeTranscriptPlugin = () => {
               if (!bestSub) throw new Error('Transcript format not supported');
               
               const res = await fetch(bestSub.url);
-              const data = await res.json();
+              const data = await res.json() as any;
               formattedText = data.events.map((ev: any) => {
                 if (!ev.segs) return null;
                 return `[${Math.floor(ev.tStartMs/1000)}] ` + ev.segs.map((s: any) => s.utf8).join('');
