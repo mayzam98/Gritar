@@ -49,7 +49,8 @@ app.get('/api/transcript', async (req, res) => {
         dumpJson: true,
         skipDownload: true,
         writeAutoSub: true,
-        writeSub: true
+        writeSub: true,
+        extractorArgs: 'youtube:player_client=android'
       });
       
       let subs = output.subtitles;

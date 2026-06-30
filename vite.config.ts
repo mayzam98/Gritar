@@ -53,7 +53,8 @@ const youtubeTranscriptPlugin = () => {
                 dumpJson: true,
                 skipDownload: true,
                 writeAutoSub: true,
-                writeSub: true
+                writeSub: true,
+                extractorArgs: 'youtube:player_client=android'
               }) as any;
               
               let subs = output.subtitles;
