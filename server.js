@@ -79,14 +79,29 @@ app.get('/api/transcript', async (req, res) => {
           title = titleMatch[1].replace(' - YouTube', '').trim();
         }
 
+        let tracks = null;
         const match = html.match(/"captionTracks":\s*(\[.*?\])/);
-        if (!match) {
+        if (match) {
+          tracks = JSON.parse(match[1]);
+        } else {
+          // Fallback to searching ytInitialPlayerResponse
+          const playerResponseMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
+          if (playerResponseMatch) {
+            try {
+              const playerResponse = JSON.parse(playerResponseMatch[1]);
+              tracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+            } catch (e) {
+              console.error("Failed to parse ytInitialPlayerResponse", e);
+            }
+          }
+        }
+
+        if (!tracks || !tracks.length) {
           const consent = html.includes('consent.youtube.com') || html.includes('Antes de continuar en YouTube');
-          console.error(`Transcript not found in DOM. Consent screen present? ${consent}`);
+          const botBlocked = html.includes('unusual traffic') || html.includes('captcha') || html.includes('Tráfico inusual');
+          console.error(`Transcript not found in DOM. Consent screen? ${consent}. Bot blocked? ${botBlocked}. Page Title: "${title}"`);
           throw new Error('Transcript is disabled or not found on this video');
         }
-        
-        const tracks = JSON.parse(match[1]);
         const track = tracks.find(t => t.languageCode === 'es') || tracks.find(t => t.languageCode === 'en') || tracks[0];
         
         const json = await page.evaluate(async (url) => {
