@@ -1,7 +1,10 @@
 import express from 'express';
 import { YoutubeTranscript } from 'youtube-transcript';
 import cors from 'cors';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
 app.use(cors());
