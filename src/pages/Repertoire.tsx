@@ -13,7 +13,7 @@ import { useAppStore } from '../core/application/store';
 const MemoryCard: React.FC<{ song: any, index: number, deleteSong: any, updateSong: any, navigate: any, onLoadMemory: any }> = ({ song, index, deleteSong, updateSong, navigate, onLoadMemory }) => {
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden', marginBottom: '8px' }}>
-      <div 
+      <div
         style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
         onClick={() => onLoadMemory(song)}
       >
@@ -21,7 +21,7 @@ const MemoryCard: React.FC<{ song: any, index: number, deleteSong: any, updateSo
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#60a5fa' }}>Memoria {index}</span>
           <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>({new Date(song.createdAt).toLocaleDateString()})</span>
         </div>
-        <button 
+        <button
           onClick={(e) => { e.stopPropagation(); deleteSong(song.id); }}
           style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer' }}
         >
@@ -39,7 +39,7 @@ const Repertoire: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [hoveredChordIdx, setHoveredChordIdx] = useState<number | null>(null);
-  
+
   // Settings for real AI integration
   // Reads from .env file if available, otherwise defaults to Gemini and empty key
   const [aiProviderType, setAiProviderType] = useState<AiProviderType>(
@@ -60,7 +60,7 @@ const Repertoire: React.FC = () => {
       setErrorMsg("Por favor, introduce tu clave API para continuar.");
       return;
     }
-    
+
     setErrorMsg('');
     setIsAnalyzing(true);
     setAnalysisResult(null);
@@ -68,18 +68,18 @@ const Repertoire: React.FC = () => {
     try {
       // 1. Instantiate the correct provider using the Factory
       const provider = AiFactory.createProvider(aiProviderType, apiKey);
-      
+
       // 2. Initialize the Use Case
       const useCase = new AnalyzeYouTubeTutorialUseCase(provider);
-      
+
       // 3. Execute the analysis (this calls the real API with the mock transcript)
       const result = await useCase.execute(url);
-      
+
       // Extract video ID for iframe
       const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
       const match = url.match(regExp);
       const videoId = (match && match[7].length === 11) ? match[7] : '';
-      
+
       setAnalysisResult({
         title: (result as any).title || "Tutorial Descifrado",
         originalVideo: url,
@@ -98,10 +98,10 @@ const Repertoire: React.FC = () => {
     if (analysisResult) {
       // Add a random trigger to guarantee the state changes and the iframe remounts,
       // even if you click the exact same chord twice or if the time is 0.
-      setAnalysisResult({ 
-        ...analysisResult, 
+      setAnalysisResult({
+        ...analysisResult,
         currentSeekTime: timeSeconds,
-        seekTrigger: Math.random() 
+        seekTrigger: Math.random()
       });
     }
   };
@@ -126,7 +126,7 @@ const Repertoire: React.FC = () => {
       </header>
 
       <div style={{ padding: '0 20px' }}>
-        
+
         {/* YouTube AI Feature */}
         <div className="card" style={{ marginBottom: '24px', border: '1px solid #3b82f6', background: 'linear-gradient(180deg, rgba(59,130,246,0.1) 0%, rgba(30,41,59,1) 100%)' }}>
           <h2 className="card-title" style={{ color: '#60a5fa' }}>
@@ -140,9 +140,9 @@ const Repertoire: React.FC = () => {
           {/* AI Settings */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 200px', position: 'relative' }}>
-              <label style={{display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px'}}>Motor de IA:</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px' }}>Motor de IA:</label>
               <Bot size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '36px', pointerEvents: 'none' }} />
-              <select 
+              <select
                 value={aiProviderType}
                 onChange={(e) => setAiProviderType(e.target.value as AiProviderType)}
                 style={{
@@ -163,10 +163,10 @@ const Repertoire: React.FC = () => {
               </select>
             </div>
             <div style={{ flex: '2 1 300px', position: 'relative' }}>
-              <label style={{display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px'}}>Tu API Key (secreta):</label>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px' }}>Tu API Key (secreta):</label>
               <Key size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '36px', pointerEvents: 'none' }} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 placeholder="sk-..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
@@ -182,13 +182,13 @@ const Repertoire: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div style={{ marginBottom: '16px' }}>
-            <label style={{display: 'block', fontSize: '0.8rem', color: '#60a5fa', marginBottom: '8px', fontWeight: 'bold'}}>Enlace del Tutorial de YouTube:</label>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#60a5fa', marginBottom: '8px', fontWeight: 'bold' }}>Enlace del Tutorial de YouTube:</label>
             <div style={{ position: 'relative' }}>
               <Video size={20} color="#ef4444" style={{ position: 'absolute', left: '12px', top: '10px', pointerEvents: 'none' }} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Pega aquí el link (ej. https://youtube.com/watch?v=...)"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -204,9 +204,9 @@ const Repertoire: React.FC = () => {
               />
             </div>
           </div>
-          
-          <button 
-            className="btn" 
+
+          <button
+            className="btn"
             onClick={handleAnalyze}
             disabled={!url || isAnalyzing}
             style={{ width: '100%', marginBottom: '24px', justifyContent: 'center', padding: '12px' }}
@@ -222,7 +222,7 @@ const Repertoire: React.FC = () => {
 
           <AnimatePresence>
             {isAnalyzing && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -236,24 +236,24 @@ const Repertoire: React.FC = () => {
             )}
 
             {analysisResult && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={{ marginTop: '16px', padding: '16px', backgroundColor: '#0f172a', borderRadius: '8px', border: '1px solid #334155' }}
               >
                 <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#22c55e', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CheckCircle2 size={20} />
-                  Análisis Completado
+                  Análisis Completadoo
                 </h3>
-                
+
                 <h2 style={{ margin: '0 0 16px 0', fontSize: '1.3rem', fontWeight: 'bold' }}>
                   {analysisResult.title}
                 </h2>
-                
+
                 {/* Embedded Video Player */}
                 {analysisResult.videoId && (
                   <div style={{ marginBottom: '24px' }}>
-                    <YouTubeSyncPlayer 
+                    <YouTubeSyncPlayer
                       videoId={analysisResult.videoId}
                       chordTimestamps={analysisResult.chordTimestamps || []}
                       chordDetails={analysisResult.chordDetails || []}
@@ -261,7 +261,7 @@ const Repertoire: React.FC = () => {
                     />
                   </div>
                 )}
-                
+
                 <div style={{ marginBottom: '16px' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Acordes Detectados:</strong>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
@@ -271,83 +271,83 @@ const Repertoire: React.FC = () => {
                         const chordTime = ct.timeSeconds;
                         const hasTime = chordTime !== undefined && chordTime !== null;
                         const chordDetails = analysisResult.chordDetails?.find((d: any) => d.chord === c);
-                        
-                      return (
-                        <div key={`${c}-${chordTime}-${idx}`} style={{ position: 'relative' }} onMouseEnter={() => setHoveredChordIdx(idx)} onMouseLeave={() => setHoveredChordIdx(null)}>
-                          <button 
-                            onClick={() => hasTime ? handlePlayChord(chordTime) : null}
-                            title={hasTime ? `Ver acorde ${c} en el minuto ${Math.floor(chordTime / 60)}:${Math.floor(chordTime % 60).toString().padStart(2, '0')}` : 'Acorde detectado'}
-                            style={{ 
-                              backgroundColor: '#1e293b', 
-                              padding: '6px 12px', 
-                              borderRadius: '4px', 
-                              fontSize: '0.9rem', 
-                              fontWeight: 600, 
-                              border: '1px solid #3b82f6',
-                              color: 'white',
-                              cursor: hasTime ? 'pointer' : 'default',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => { if(hasTime) e.currentTarget.style.backgroundColor = '#3b82f6' }}
-                            onMouseOut={(e) => { if(hasTime) e.currentTarget.style.backgroundColor = '#1e293b' }}
-                          >
-                            {c}
-                            {hasTime && <PlayCircle size={14} color="#93c5fd" />}
-                          </button>
 
-                          {/* Hover Chord Diagram */}
-                          <AnimatePresence>
-                            {hoveredChordIdx === idx && chordDetails && (
-                              <motion.div 
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                style={{ 
-                                  position: 'absolute', 
-                                  bottom: '100%', 
-                                  left: '50%', 
-                                  transform: 'translateX(-50%)', 
-                                  marginBottom: '12px', 
-                                  zIndex: 50, 
-                                  width: '240px', 
-                                  backgroundColor: '#0f172a', 
-                                  padding: '12px', 
-                                  borderRadius: '12px', 
-                                  border: '1px solid #3b82f6', 
-                                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)' 
-                                }}
-                              >
-                                <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px', textAlign: 'center', fontWeight: 'bold' }}>Cómo tocar {c}</div>
-                                <InteractiveFretboard 
-                                  positions={chordDetails.positions || []}
-                                  startFret={chordDetails.startFret || 1}
-                                  fretCount={4}
-                                />
-                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px', textAlign: 'center' }}>
-                                  Mapeado por IA desde el video
-                                </div>
-                                {/* Triangle pointer */}
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '-6px',
-                                  left: '50%',
-                                  transform: 'translateX(-50%) rotate(45deg)',
-                                  width: '12px',
-                                  height: '12px',
-                                  backgroundColor: '#0f172a',
-                                  borderBottom: '1px solid #3b82f6',
-                                  borderRight: '1px solid #3b82f6'
-                                }} />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    });
-                  })()}
+                        return (
+                          <div key={`${c}-${chordTime}-${idx}`} style={{ position: 'relative' }} onMouseEnter={() => setHoveredChordIdx(idx)} onMouseLeave={() => setHoveredChordIdx(null)}>
+                            <button
+                              onClick={() => hasTime ? handlePlayChord(chordTime) : null}
+                              title={hasTime ? `Ver acorde ${c} en el minuto ${Math.floor(chordTime / 60)}:${Math.floor(chordTime % 60).toString().padStart(2, '0')}` : 'Acorde detectado'}
+                              style={{
+                                backgroundColor: '#1e293b',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
+                                border: '1px solid #3b82f6',
+                                color: 'white',
+                                cursor: hasTime ? 'pointer' : 'default',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseOver={(e) => { if (hasTime) e.currentTarget.style.backgroundColor = '#3b82f6' }}
+                              onMouseOut={(e) => { if (hasTime) e.currentTarget.style.backgroundColor = '#1e293b' }}
+                            >
+                              {c}
+                              {hasTime && <PlayCircle size={14} color="#93c5fd" />}
+                            </button>
+
+                            {/* Hover Chord Diagram */}
+                            <AnimatePresence>
+                              {hoveredChordIdx === idx && chordDetails && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '100%',
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    marginBottom: '12px',
+                                    zIndex: 50,
+                                    width: '240px',
+                                    backgroundColor: '#0f172a',
+                                    padding: '12px',
+                                    borderRadius: '12px',
+                                    border: '1px solid #3b82f6',
+                                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
+                                  }}
+                                >
+                                  <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '8px', textAlign: 'center', fontWeight: 'bold' }}>Cómo tocar {c}</div>
+                                  <InteractiveFretboard
+                                    positions={chordDetails.positions || []}
+                                    startFret={chordDetails.startFret || 1}
+                                    fretCount={4}
+                                  />
+                                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px', textAlign: 'center' }}>
+                                    Mapeado por IA desde el video
+                                  </div>
+                                  {/* Triangle pointer */}
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: '-6px',
+                                    left: '50%',
+                                    transform: 'translateX(-50%) rotate(45deg)',
+                                    width: '12px',
+                                    height: '12px',
+                                    backgroundColor: '#0f172a',
+                                    borderBottom: '1px solid #3b82f6',
+                                    borderRight: '1px solid #3b82f6'
+                                  }} />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                   <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', fontStyle: 'italic' }}>
                     Haz clic en los acordes con ícono de Play para saltar al momento exacto en el video.
@@ -363,12 +363,12 @@ const Repertoire: React.FC = () => {
                           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: 'bold' }}>{sp.name}</span>
                             {sp.timeSeconds !== undefined && sp.timeSeconds !== null && (
-                              <button 
+                              <button
                                 onClick={() => handlePlayChord(sp.timeSeconds)}
                                 title={`Ver ritmo en el minuto ${Math.floor(sp.timeSeconds / 60)}:${Math.floor(sp.timeSeconds % 60).toString().padStart(2, '0')}`}
-                                style={{ 
-                                  background: 'none', border: 'none', padding: 0, cursor: 'pointer', 
-                                  display: 'flex', alignItems: 'center', color: '#93c5fd', transition: 'color 0.2s' 
+                                style={{
+                                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                                  display: 'flex', alignItems: 'center', color: '#93c5fd', transition: 'color 0.2s'
                                 }}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#fff'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#93c5fd'}
@@ -383,7 +383,7 @@ const Repertoire: React.FC = () => {
                                 const uniqueChords = Array.from(new Set(analysisResult.chords || []));
                                 const chordA = uniqueChords[0] || 'C';
                                 const chordB = uniqueChords[1] || 'G';
-                                
+
                                 navigate('/transiciones', {
                                   state: {
                                     chordA,
@@ -420,9 +420,9 @@ const Repertoire: React.FC = () => {
                               <ListMusic size={12} /> Secuenciador
                             </button>
                           </div>
-                          <StrummingVisualizer 
-                            steps={sp.pattern} 
-                            size="sm" 
+                          <StrummingVisualizer
+                            steps={sp.pattern}
+                            size="sm"
                             isEditable={true}
                             onChange={(newSteps) => {
                               const newResult = { ...analysisResult };
@@ -433,9 +433,9 @@ const Repertoire: React.FC = () => {
                         </div>
                       ))
                     ) : Array.isArray(analysisResult.strumming) ? (
-                      <StrummingVisualizer 
-                        steps={analysisResult.strumming} 
-                        size="sm" 
+                      <StrummingVisualizer
+                        steps={analysisResult.strumming}
+                        size="sm"
                         isEditable={true}
                         onChange={(newSteps) => {
                           setAnalysisResult({ ...analysisResult, strumming: newSteps });
@@ -446,7 +446,7 @@ const Repertoire: React.FC = () => {
                         {analysisResult.strumming}
                       </p>
                     ) : null}
-                    
+
                     <button
                       className="btn btn-secondary"
                       style={{ alignSelf: 'flex-start', fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center' }}
@@ -470,9 +470,9 @@ const Repertoire: React.FC = () => {
                     ))}
                   </ul>
                 </div>
-                
-                <button 
-                  className="btn" 
+
+                <button
+                  className="btn"
                   style={{ width: '100%', marginTop: '16px' }}
                   onClick={() => {
                     saveSong({
@@ -519,20 +519,20 @@ const Repertoire: React.FC = () => {
 
               <div style={{ marginTop: '12px' }}>
                 {group.memories.map((song: any, idx: number) => (
-                  <MemoryCard 
-                    key={song.id} 
-                    song={song} 
-                    index={idx + 1} 
-                    deleteSong={deleteSong} 
-                    updateSong={updateSong} 
+                  <MemoryCard
+                    key={song.id}
+                    song={song}
+                    index={idx + 1}
+                    deleteSong={deleteSong}
+                    updateSong={updateSong}
                     navigate={navigate}
                     onLoadMemory={onLoadMemory}
                   />
                 ))}
               </div>
 
-              <button 
-                className="btn btn-secondary" 
+              <button
+                className="btn btn-secondary"
                 style={{ padding: '8px 16px', fontSize: '0.9rem', width: '100%', marginTop: '8px' }}
                 onClick={() => {
                   setUrl(group.url);
@@ -543,7 +543,7 @@ const Repertoire: React.FC = () => {
               </button>
             </div>
           ))}
-          
+
           {(savedSongs || []).length === 0 && (
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>No tienes canciones guardadas aún. Analiza un tutorial y guárdalo.</p>
           )}
