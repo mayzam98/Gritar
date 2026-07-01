@@ -36,7 +36,7 @@ jobs:
           scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no -r dist/* ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/dist/
 
           # Copiar archivos del Backend
-          scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no server.js package.json package-lock.json ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/
+          scp -i /tmp/llave_ssh -o StrictHostKeyChecking=no server.js get_transcript.py package.json package-lock.json ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/gritar/
           
           # Iniciar el backend con Node.js y PM2 en el servidor
-          ssh -i /tmp/llave_ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/gritar && npm install --omit=dev && npx pm2 restart gritar-backend || npx pm2 start server.js --name gritar-backend"
+          ssh -i /tmp/llave_ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "cd /var/www/gritar && npm install --omit=dev && (pip3 install youtube-transcript-api --break-system-packages || pip3 install youtube-transcript-api) && npx pm2 restart gritar-backend || npx pm2 start server.js --name gritar-backend"
