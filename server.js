@@ -65,6 +65,11 @@ app.get('/api/transcript', async (req, res) => {
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
+        await page.setCookie(
+          { name: 'CONSENT', value: 'YES+cb.20210328-17-p0.en+FX+478', domain: '.youtube.com' },
+          { name: 'SOCS', value: 'CAI', domain: '.youtube.com' }
+        );
+        
         await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         const html = await page.content();
         
@@ -75,7 +80,11 @@ app.get('/api/transcript', async (req, res) => {
         }
 
         const match = html.match(/"captionTracks":\s*(\[.*?\])/);
-        if (!match) throw new Error('Transcript is disabled or not found on this video');
+        if (!match) {
+          const consent = html.includes('consent.youtube.com') || html.includes('Antes de continuar en YouTube');
+          console.error(`Transcript not found in DOM. Consent screen present? ${consent}`);
+          throw new Error('Transcript is disabled or not found on this video');
+        }
         
         const tracks = JSON.parse(match[1]);
         const track = tracks.find(t => t.languageCode === 'es') || tracks.find(t => t.languageCode === 'en') || tracks[0];
