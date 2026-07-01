@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { YoutubeTranscript } from 'youtube-transcript'
-import youtubedl from 'youtube-dl-exec'
+import puppeteer from 'puppeteer'
 
 // Custom Vite plugin to act as a backend for transcript extraction
 const youtubeTranscriptPlugin = () => {
@@ -48,31 +48,61 @@ const youtubeTranscriptPlugin = () => {
                 console.error("Could not fetch title", e);
               }
             } catch (primaryError: any) {
-              console.warn("Primary extractor failed, using yt-dlp fallback:", primaryError.message);
-              const output = await youtubedl(videoUrl, {
-                dumpJson: true,
-                skipDownload: true,
-                writeAutoSub: true,
-                writeSub: true,
-                extractorArgs: 'youtube:player_client=default,ios;po_token=web+MsdFwO-b2c6d4G5e8A9C1V2X3Z4Q5Y6W7E8R9T0Y1U2I3O4P5A6S7D8F9G0H1J2K3L4Z5X6C7V8B9N0M1Q2W3E4R5T6Y7U8I9O0P1A2S3D4F5G6H7J8K9L0Z1X2C3V4B5N6M7'
-              } as any) as any;
+              console.warn("Primary extractor failed, using Puppeteer Browser Simulation:", primaryError.message);
               
-              let subs = output.subtitles;
-              if (!subs || Object.keys(subs).length === 0) subs = output.automatic_captions;
-              if (!subs || Object.keys(subs).length === 0) throw new Error('Transcript is disabled on this video');
-              
-              const esSubs = subs['es'] || subs['en'] || Object.values(subs)[0];
-              const bestSub = esSubs.find((s: any) => s.ext === 'json3');
-              if (!bestSub) throw new Error('Transcript format not supported');
-              
-              const res = await fetch(bestSub.url);
-              const data = await res.json() as any;
-              formattedText = data.events.map((ev: any) => {
-                if (!ev.segs) return null;
-                return `[${Math.floor(ev.tStartMs/1000)}] ` + ev.segs.map((s: any) => s.utf8).join('');
-              }).filter(Boolean).join('\n');
-              
-              title = output.title || title;
+              let browser;
+              try {
+                browser = await puppeteer.launch({
+                  headless: true,
+                  args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu'
+                  ]
+                });
+                
+                const page = await browser.newPage();
+                await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                
+                await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                const html = await page.content();
+                
+                // Scraping the title
+                const titleMatch = html.match(/<title>(.*?)<\/title>/);
+                if (titleMatch && titleMatch[1]) {
+                  title = titleMatch[1].replace(' - YouTube', '').trim();
+                }
+
+                const match = html.match(/"captionTracks":\s*(\[.*?\])/);
+                if (!match) throw new Error('Transcript is disabled or not found on this video');
+                
+                const tracks = JSON.parse(match[1]);
+                const track = tracks.find((t: any) => t.languageCode === 'es') || tracks.find((t: any) => t.languageCode === 'en') || tracks[0];
+                
+                const json = await page.evaluate(async (url) => {
+                  const r = await fetch(url + '&fmt=json3');
+                  if (!r.ok) throw new Error('Failed to fetch from internal YouTube API');
+                  return await r.json();
+                }, track.baseUrl) as any;
+                
+                if (!json || !json.events) throw new Error('Failed to parse subtitle events');
+                
+                formattedText = json.events.map((ev: any) => {
+                  if (!ev.segs) return null;
+                  return `[${Math.floor(ev.tStartMs/1000)}] ` + ev.segs.map((s: any) => s.utf8).join('');
+                }).filter(Boolean).join('\n');
+                
+              } catch (puppeteerError) {
+                console.error("Puppeteer simulation failed:", puppeteerError);
+                throw new Error("El VPS está bloqueado y la simulación del navegador falló. Verifica las dependencias de Chromium en el servidor.");
+              } finally {
+                if (browser) await browser.close();
+              }
             }
             
             res.setHeader('Content-Type', 'application/json');
