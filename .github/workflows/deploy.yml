@@ -1,0 +1,30 @@
+name: Deploy Frontend Gritar
+
+on:
+  push:
+    branches:
+      - main # Cambia a 'master' si esa es tu rama principal
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decodificar Llave SSH
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > /tmp/llave_ssh
+          chmod 600 /tmp/llave_ssh
+
+      - name: Desplegando en el VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key_path: /tmp/llave_ssh
+          script: |
+            cd /var/www/gritar
+            git pull origin main
+            npm install
+            npm run build
+            
+            # (Opcional) Si necesitas reiniciar Nginx, descomenta la siguiente línea:
+            sudo systemctl restart nginx
