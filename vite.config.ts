@@ -18,7 +18,53 @@ const youtubeTranscriptPlugin = () => {
               return res.end(JSON.stringify({ error: 'Missing url parameter' }));
             }
 
-            const transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+            let transcriptArray;
+            try {
+              transcriptArray = await YoutubeTranscript.fetchTranscript(videoUrl);
+            } catch (err) {
+              console.log("[YoutubeTranscript Fallback] Attempting manual extraction for:", videoUrl);
+              const response = await fetch(videoUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                  'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
+                  'Cookie': 'CONSENT=YES+cb'
+                }
+              });
+              const html = await response.text();
+              const splittedHTML = html.split('"captions":');
+              if (splittedHTML.length <= 1) {
+                console.error("[YoutubeTranscript] Transcript disabled or not found for:", videoUrl);
+                throw new Error("El video no tiene subtítulos o fue bloqueado por YouTube.");
+              }
+              const captionsJson = splittedHTML[1].split(',"videoDetails')[0].replace(/\n/g, '');
+              const captions = JSON.parse(captionsJson);
+              const captionTracks = captions?.playerCaptionsTracklistRenderer?.captionTracks;
+              
+              if (!captionTracks || !captionTracks.length) {
+                console.error("[YoutubeTranscript] Transcript disabled or not found for:", videoUrl);
+                throw new Error("No hay pistas de subtítulos disponibles.");
+              }
+              
+              // Intentar buscar los subtítulos en español primero, si no, el primero
+              const esTrack = captionTracks.find(track => track.languageCode === 'es' || track.languageCode === 'es-419');
+              const trackToUse = esTrack || captionTracks[0];
+              
+              const transcriptUrl = trackToUse.baseUrl;
+              const transcriptResponse = await fetch(transcriptUrl);
+              const transcriptXml = await transcriptResponse.text();
+              
+              const matches = [...transcriptXml.matchAll(/<text start="([^"]*)" dur="([^"]*)".*?>(.*?)<\/text>/g)];
+              transcriptArray = matches.map(m => ({
+                offset: parseFloat(m[1]) * 1000,
+                duration: parseFloat(m[2]) * 1000,
+                text: m[3].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+              }));
+              
+              if (!transcriptArray.length) {
+                console.error("[YoutubeTranscript] Transcript disabled or not found for:", videoUrl);
+                throw err;
+              }
+            }
             
             // Format the transcript to include timestamps so the AI knows exactly when things happen
             // Example: [12] Hola a todos
